@@ -6,11 +6,11 @@ addpath(genpath('Files'));
 
 % Process user data
 
-initializeVariables();
+initializeVariables(); % done
 
-[INFO] = getProjectInfo(INFO);
+[INFO] = getProjectInfo(INFO);% done
 
-[FILEDATA] = readPropertiesFiles(FILEDATA, INFO);
+[FILEDATA] = readPropertiesFiles(FILEDATA, INFO);% done
 
 [MESH] = processMesh(FILEDATA, MESH);
 [DISPLACEMENTS] = processDisplacements(FILEDATA, DISPLACEMENTS);
