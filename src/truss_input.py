@@ -1,3 +1,4 @@
+import numpy as np
 import tkinter as tk
 from tkinter import filedialog
 import csv
@@ -96,7 +97,7 @@ class Mesh:
         self.young_modulus = None
         self.area = None
 
-    def process_mesh(self, file_data):
+    def process_mesh(self, file_data:np.ndarray):
         file_line = 0
 
         # Process node data
@@ -203,6 +204,6 @@ class Forces:
         for _ in range(self.number_forces):
             self.force_nodes.append(int(file_data[file_line][0]))
             self.force_angles.append(file_data[file_line][1])
-            self.force_components.append((file_data[file_line][2], file_data[file_line][3]))
+            self.force_components.append((file_data[file_line][2], file_data[file_line][3],))
             file_line += 1
 

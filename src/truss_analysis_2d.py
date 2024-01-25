@@ -175,7 +175,7 @@ class Analysis:
 
         for i in range(number_roller):
             r_node = roller_nodes[i]
-            r_dofs = [2 * r_node - 1, 2 * r_node]
+            r_dofs = [2 * r_node - 2, 2 * r_node-1]
             r_angle = roller_angles[i]
             c = np.cos(np.radians(r_angle))
             s = np.sin(np.radians(r_angle))
@@ -242,150 +242,150 @@ if __name__ == '__main__':
     # info.get_project_info()
     print(info.project_directory)
     print(info.file_name)        
-# %%
-fileData = FileData.from_directory(info.project_directory)
-# %%
-print(fileData.mesh)
-print(fileData.displacements)
-# %%
-# Usage
-mesh = Mesh()
-mesh.process_mesh(file_data= fileData.mesh)
+    # %%
+    fileData = FileData.from_directory(info.project_directory)
+    # %%
+    print(fileData.mesh)
+    print(fileData.displacements)
+    # %%
+    # Usage
+    mesh = Mesh()
+    mesh.process_mesh(file_data= fileData.mesh)
 
-# Now mesh instance has its attributes set based on file data
-# %%
-print("Number of nodes: ", mesh.number_nodes)
-print("Number of elements: ", mesh.number_elements)
-print("Node coordinates: ", mesh.node_coordinates)  
-print("Element connectivity: ", mesh.element_connectivity)  
-print("Young's modulus: ", mesh.young_modulus)
-print("Area: ", mesh.area)
+    # Now mesh instance has its attributes set based on file data
+    # %%
+    print("Number of nodes: ", mesh.number_nodes)
+    print("Number of elements: ", mesh.number_elements)
+    print("Node coordinates: ", mesh.node_coordinates)  
+    print("Element connectivity: ", mesh.element_connectivity)  
+    print("Young's modulus: ", mesh.young_modulus)
+    print("Area: ", mesh.area)
 
-# %%
-# Usage
-displacements = Displacements()
-displacements.process_displacements(file_data= fileData.displacements)
+    # %%
+    # Usage
+    displacements = Displacements()
+    displacements.process_displacements(file_data= fileData.displacements)
 
-print(f"Number of pin: {displacements.number_pin}")
-print(f"Pin nodes: {displacements.pin_nodes}")
-print(f"Pin angles: {displacements.pin_angles}")
-print(f"Pin displacements: {displacements.pin_displacements}")
-print(f"Number of roller: {displacements.number_roller}")
-print(f"Roller nodes: {displacements.roller_nodes}")
-print(f"Roller directions: {displacements.roller_directions}")
-print(f"Roller angles: {displacements.roller_angles}")
-print(f"Roller displacements: {displacements.roller_displacements}")
-print(f"Number of support: {displacements.number_support}")
+    print(f"Number of pin: {displacements.number_pin}")
+    print(f"Pin nodes: {displacements.pin_nodes}")
+    print(f"Pin angles: {displacements.pin_angles}")
+    print(f"Pin displacements: {displacements.pin_displacements}")
+    print(f"Number of roller: {displacements.number_roller}")
+    print(f"Roller nodes: {displacements.roller_nodes}")
+    print(f"Roller directions: {displacements.roller_directions}")
+    print(f"Roller angles: {displacements.roller_angles}")
+    print(f"Roller displacements: {displacements.roller_displacements}")
+    print(f"Number of support: {displacements.number_support}")
 
-# %%
-# Usage
-forces = Forces()
-forces.process_forces(file_data= fileData.forces)
-print(f"Number of forces: {forces.number_forces}")
-print(f"Force nodes: {forces.force_nodes}")
-print(f"Force angles: {forces.force_angles}")
-print(f"Force components: {forces.force_components}")
+    # %%
+    # Usage
+    forces = Forces()
+    forces.process_forces(file_data= fileData.forces)
+    print(f"Number of forces: {forces.number_forces}")
+    print(f"Force nodes: {forces.force_nodes}")
+    print(f"Force angles: {forces.force_angles}")
+    print(f"Force components: {forces.force_components}")
 
-# %%
-def write_input_data(info, mesh, displacements, forces):
-    project_dir = info.project_directory
-    file_name = info.file_name
-    new_file_name = f"{file_name}_DATA.dat"
-    file_path = f"{project_dir}/{new_file_name}"
+    # %%
+    def write_input_data(info, mesh, displacements, forces):
+        project_dir = info.project_directory
+        file_name = info.file_name
+        new_file_name = f"{file_name}_DATA.dat"
+        file_path = f"{project_dir}/{new_file_name}"
 
-    with open(file_path, 'w') as file:
-        bar_line = '-' * 40
+        with open(file_path, 'w') as file:
+            bar_line = '-' * 40
 
-        # Writing node coordinates
-        file.write('     NODE COORDINATES\n')
-        file.write(f'{bar_line}\n')
-        file.write('NODE       X(M)        Y(M)\n')
-        for i, (x, y) in enumerate(mesh.node_coordinates, start=1):
-            file.write(f'{i:<4} {x:11.3f} {y:11.3f}\n')
-        file.write('\n')
-
-        # Writing elements
-        file.write(' ELEMENTS\n')
-        file.write(f'{bar_line}\n')
-        file.write('EL.  NODE1  NODE2      A(M2)     E(PA)\n')
-        for i, ((node1, node2), a, e) in enumerate(zip(mesh.element_connectivity, mesh.area, mesh.young_modulus), start=1):
-            file.write(f'{i:<3} {node1:<6} {node2:<6} {a:11.6G} {e:10.5G}\n')
-        file.write('\n')
-
-        # Writing pin supports
-        if displacements.number_pin > 0:
-            file.write('  PIN SUPPORTS\n')
+            # Writing node coordinates
+            file.write('     NODE COORDINATES\n')
             file.write(f'{bar_line}\n')
-            file.write('NODE    DX\'(M)    DY\'(M)   ANGLE(DEG)\n')
-            for node, (dx, dy), angle in zip(displacements.pin_nodes, displacements.pin_displacements, displacements.pin_angles):
-                file.write(f'{node:<4} {dx:11.3f} {dy:11.3f} {angle:11.2f}\n')
+            file.write('NODE       X(M)        Y(M)\n')
+            for i, (x, y) in enumerate(mesh.node_coordinates, start=1):
+                file.write(f'{i:<4} {x:11.3f} {y:11.3f}\n')
             file.write('\n')
 
-        # Writing roller supports
-        if displacements.number_roller > 0:
-            file.write('ROLLER SUPPORTS\n')
+            # Writing elements
+            file.write(' ELEMENTS\n')
             file.write(f'{bar_line}\n')
-            file.write('NODE   DIRECTION   DN(M)   ANGLE(DEG)\n')
-            for node, direction, dn, angle in zip(displacements.roller_nodes, displacements.roller_directions, displacements.roller_displacements, displacements.roller_angles):
-                file.write(f'{node:<4} {direction:<11} {dn:11.3f} {angle:11.2f}\n')
+            file.write('EL.  NODE1  NODE2      A(M2)     E(PA)\n')
+            for i, ((node1, node2), a, e) in enumerate(zip(mesh.element_connectivity, mesh.area, mesh.young_modulus), start=1):
+                file.write(f'{i:<3} {node1:<6} {node2:<6} {a:11.6G} {e:10.5G}\n')
             file.write('\n')
 
-        # Writing forces
-        file.write(' FORCES\n')
-        file.write(f'{bar_line}\n')
-        file.write('NODE     FX\'(N)     FY\'(N)   ANGLE(DEG)\n')
-        for node, (fx, fy), angle in zip(forces.force_nodes, forces.force_components, forces.force_angles):
-            file.write(f'{node:<4} {fx:11.6G} {fy:11.6G} {angle:11.2f}\n')
+            # Writing pin supports
+            if displacements.number_pin > 0:
+                file.write('  PIN SUPPORTS\n')
+                file.write(f'{bar_line}\n')
+                file.write('NODE    DX\'(M)    DY\'(M)   ANGLE(DEG)\n')
+                for node, (dx, dy), angle in zip(displacements.pin_nodes, displacements.pin_displacements, displacements.pin_angles):
+                    file.write(f'{node:<4} {dx:11.3f} {dy:11.3f} {angle:11.2f}\n')
+                file.write('\n')
 
-# Usage example
-# Assume info, mesh, displacements, and forces are instances of their respective classes with attributes set
-write_input_data(info=info, mesh=mesh, displacements=displacements, forces=forces)
+            # Writing roller supports
+            if displacements.number_roller > 0:
+                file.write('ROLLER SUPPORTS\n')
+                file.write(f'{bar_line}\n')
+                file.write('NODE   DIRECTION   DN(M)   ANGLE(DEG)\n')
+                for node, direction, dn, angle in zip(displacements.roller_nodes, displacements.roller_directions, displacements.roller_displacements, displacements.roller_angles):
+                    file.write(f'{node:<4} {direction:<11} {dn:11.3f} {angle:11.2f}\n')
+                file.write('\n')
 
-# %%
+            # Writing forces
+            file.write(' FORCES\n')
+            file.write(f'{bar_line}\n')
+            file.write('NODE     FX\'(N)     FY\'(N)   ANGLE(DEG)\n')
+            for node, (fx, fy), angle in zip(forces.force_nodes, forces.force_components, forces.force_angles):
+                file.write(f'{node:<4} {fx:11.6G} {fy:11.6G} {angle:11.2f}\n')
 
-# Usage
-dofs = Dofs()
-# Assume mesh and displacements are instances of their respective classes with attributes set
-dofs.process_dofs(mesh=mesh, displacements=displacements)
-print(f"Number of DOFs: {dofs.number_dofs}")
-print(f"Number of fixed DOFs: {dofs.number_fixed}")
-print(f"Number of free DOFs: {dofs.number_free}")
-print(f"Fixed DOFs: {dofs.fixed_dofs}")
-print(f"Free DOFs: {dofs.free_dofs}")
+    # Usage example
+    # Assume info, mesh, displacements, and forces are instances of their respective classes with attributes set
+    write_input_data(info=info, mesh=mesh, displacements=displacements, forces=forces)
 
-# %%
-# Usage
-analysis = Analysis()
-# Assume mesh is an instance of the Mesh class with attributes set
-analysis.get_global_stiffness_matrix(mesh=mesh)
-analysis.get_global_force_vector(forces=forces, dofs=dofs)
-print(analysis.stiffness_global_matrix)
-print(analysis.stiffness_global_matrix.shape)
-print(analysis.stiffness_global_matrix.dtype)
-# %%
-print(analysis.force_global_vector)
-print(analysis.force_global_vector.shape)
-print(analysis.force_global_vector.dtype)
-# %%
-analysis.get_new_displacement_vector(displacements=displacements, dofs=dofs)
-print("New Displacement vector==============================")
-print(analysis.displacement_new_vector)
-print(analysis.displacement_new_vector.shape)
-# %%
-analysis.get_new_transformation_matrix(displacements=displacements, dofs=dofs)  
-print("New Transformation matrix==============================")
-print(analysis.transformation_new_matrix)
-print(f"New Transformation matrix shape: {analysis.transformation_new_matrix.shape}")
-print(f"New Transformation matrix dtype: {analysis.transformation_new_matrix.dtype}")   
+    # %%
 
-# %%
-# Usage
-solution = Solution()
-# Assume analysis and dofs are instances of their respective classes with attributes set
-solution.solve_displacement(analysis, dofs)
-print("Displacements==============================")
-print(solution.new_displacements)
-print(solution.new_displacements.shape)
-print(solution.new_displacements.dtype)
+    # Usage
+    dofs = Dofs()
+    # Assume mesh and displacements are instances of their respective classes with attributes set
+    dofs.process_dofs(mesh=mesh, displacements=displacements)
+    print(f"Number of DOFs: {dofs.number_dofs}")
+    print(f"Number of fixed DOFs: {dofs.number_fixed}")
+    print(f"Number of free DOFs: {dofs.number_free}")
+    print(f"Fixed DOFs: {dofs.fixed_dofs}")
+    print(f"Free DOFs: {dofs.free_dofs}")
 
-# %%
+    # %%
+    # Usage
+    analysis = Analysis()
+    # Assume mesh is an instance of the Mesh class with attributes set
+    analysis.get_global_stiffness_matrix(mesh=mesh)
+    analysis.get_global_force_vector(forces=forces, dofs=dofs)
+    print(analysis.stiffness_global_matrix)
+    print(analysis.stiffness_global_matrix.shape)
+    print(analysis.stiffness_global_matrix.dtype)
+    # %%
+    print(analysis.force_global_vector)
+    print(analysis.force_global_vector.shape)
+    print(analysis.force_global_vector.dtype)
+    # %%
+    analysis.get_new_displacement_vector(displacements=displacements, dofs=dofs)
+    print("New Displacement vector==============================")
+    print(analysis.displacement_new_vector)
+    print(analysis.displacement_new_vector.shape)
+    # %%
+    analysis.get_new_transformation_matrix(displacements=displacements, dofs=dofs)  
+    print("New Transformation matrix==============================")
+    print(analysis.transformation_new_matrix)
+    print(f"New Transformation matrix shape: {analysis.transformation_new_matrix.shape}")
+    print(f"New Transformation matrix dtype: {analysis.transformation_new_matrix.dtype}")   
+
+    # %%
+    # Usage
+    solution = Solution()
+    # Assume analysis and dofs are instances of their respective classes with attributes set
+    solution.solve_displacement(analysis, dofs)
+    print("Displacements==============================")
+    print(solution.new_displacements)
+    print(solution.new_displacements.shape)
+    print(solution.new_displacements.dtype)
+
+    # %%
