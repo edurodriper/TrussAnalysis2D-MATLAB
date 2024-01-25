@@ -4,7 +4,7 @@ from tkinter import filedialog
 import csv
 import pathlib
 from truss_input import Info, FileData,Mesh,Displacements,Forces
-
+import numpy as np
 
 class Dofs:
     def __init__(self):
@@ -14,12 +14,155 @@ class Dofs:
         self.fixed_dofs = None
         self.free_dofs = None
 
+    def process_dofs(self, mesh, displacements):
+        number_nodes = mesh.number_nodes
+        number_pin = displacements.number_pin
+        pin_nodes = displacements.pin_nodes
+        number_roller = displacements.number_roller
+        roller_nodes = displacements.roller_nodes
+        roller_directions = displacements.roller_directions
+
+        number_dofs = 2 * number_nodes
+        number_fixed_dofs = 2 * number_pin + number_roller
+        number_free_dofs = number_dofs - number_fixed_dofs
+        fixed_dofs = []
+
+        for node in pin_nodes:
+            fixed_dofs.extend([2 * node - 1, 2 * node])
+
+        for node, direction in zip(roller_nodes, roller_directions):
+            if direction == 1:
+                fixed_dofs.append(2 * node)
+            else:
+                fixed_dofs.append(2 * node - 1)
+
+        free_dofs = [dof for dof in range(1, number_dofs + 1) if dof not in fixed_dofs]
+
+        self.number_dofs = number_dofs
+        self.number_fixed = number_fixed_dofs
+        self.number_free = number_free_dofs
+        self.fixed_dofs = fixed_dofs
+        self.free_dofs = free_dofs
+
+
+
+
 class Analysis:
+    # TODO the results of this class needs testing and validation
+    # against the MAtlab code
+    
     def __init__(self):
         self.stiffness_global_matrix = None
         self.displacement_new_vector = None
         self.force_global_vector = None
         self.transformation_new_matrix = None
+
+    def get_global_stiffness_matrix(self, mesh:Mesh):
+        number_nodes = mesh.number_nodes
+        number_elements = mesh.number_elements
+        node_coordinates = mesh.node_coordinates
+        element_connectivity = mesh.element_connectivity
+        material_e = mesh.young_modulus
+        material_a = mesh.area
+
+        k_global = np.zeros((2 * number_nodes, 2 * number_nodes))
+
+        for i in range(number_elements):
+            # Element nodes
+            node1, node2 = element_connectivity[i]
+            # Element DOFs
+            element_dofs = [2 * node1 - 1, 2 * node1, 2 * node2 - 1, 2 * node2]
+            # Element material constants
+            e = material_e[i]
+            a = material_a[i]
+            # Element components and length
+            dx = node_coordinates[node2-1][0] - node_coordinates[node1-1][0]
+            dy = node_coordinates[node2-1][1] - node_coordinates[node1-1][1]
+            l = np.sqrt(dx**2 + dy**2)
+            # Sine and cosine of angle between reference frames
+            c = dx / l
+            s = dy / l
+            # Global element stiffness matrix
+            ke = e * a / l * np.array([
+                [c * c, c * s, -c * c, -c * s],
+                [c * s, s * s, -c * s, -s * s],
+                [-c * c, -c * s, c * c, c * s],
+                [-c * s, -s * s, c * s, s * s]
+            ])
+            # Assembly
+            for row_index, dof_i in enumerate(element_dofs):
+                for col_index, dof_j in enumerate(element_dofs):
+                    k_global[dof_i - 1, dof_j - 1] += ke[row_index, col_index]
+
+        self.stiffness_global_matrix = k_global
+        
+
+    def get_global_force_vector(self, forces, dofs):
+        number_forces = forces.number_forces
+        force_nodes = forces.force_nodes
+        force_components = forces.force_components
+        force_angles = forces.force_angles
+        number_dofs = dofs.number_dofs
+
+        f_global = np.zeros(number_dofs)
+
+        for i in range(number_forces):
+            f_node = force_nodes[i]
+            f_node_dofs = [2 * f_node - 1, 2 * f_node]
+            f_comp_xi_yi = np.array(force_components[i])
+            f_angle = force_angles[i]
+            c = np.cos(np.radians(f_angle))
+            s = np.sin(np.radians(f_angle))
+            t = np.array([[c, s], [-s, c]])
+            f_comp_xy = t.T @ f_comp_xi_yi
+            f_global[f_node_dofs[0] - 1] += f_comp_xy[0]
+            f_global[f_node_dofs[1] - 1] += f_comp_xy[1]
+
+        self.force_global_vector = f_global
+
+
+    def get_new_displacement_vector(self, displacements, dofs):
+        """Generate a new displacement vector with the known displacements
+        
+        #TODO : I don't have a test use case for this method yet
+        # currently most displacement would be zeros
+
+        Args:
+            displacements (_type_): _description_
+            dofs (_type_): _description_
+        """
+        number_dofs = dofs.number_dofs
+        number_pin = displacements.number_pin
+        pin_nodes = displacements.pin_nodes
+        pin_displacements = displacements.pin_displacements
+        pin_angles = displacements.pin_angles
+        number_roller = displacements.number_roller
+        roller_nodes = displacements.roller_nodes
+        roller_directions = displacements.roller_directions
+        roller_displacements = displacements.roller_displacements
+
+        uc = np.zeros(number_dofs)
+
+        for i in range(number_pin):
+            p_node = pin_nodes[i]
+            p_dofs = [2 * p_node - 1, 2 * p_node]
+            p_displ_xi_yi = np.array(pin_displacements[i])
+            p_angle = pin_angles[i]
+            c = np.cos(np.radians(p_angle))
+            s = np.sin(np.radians(p_angle))
+            t = np.array([[c, s], [-s, c]])
+            p_displ_xy = t.T @ p_displ_xi_yi
+            uc[p_dofs[0] - 1] = p_displ_xy[0]
+            uc[p_dofs[1] - 1] = p_displ_xy[1]
+
+        for i in range(number_roller):
+            r_node = roller_nodes[i]
+            r_direction = roller_directions[i]
+            r_displacement = roller_displacements[i]
+            r_dof = 2 * r_node if r_direction == 1 else 2 * r_node - 1
+            uc[r_dof - 1] = r_displacement
+
+        self.displacement_new_vector = uc
 
 class Solution:
     def __init__(self):
@@ -146,4 +289,34 @@ def write_input_data(info, mesh, displacements, forces):
 # Assume info, mesh, displacements, and forces are instances of their respective classes with attributes set
 write_input_data(info=info, mesh=mesh, displacements=displacements, forces=forces)
 
+# %%
+
+# Usage
+dofs = Dofs()
+# Assume mesh and displacements are instances of their respective classes with attributes set
+dofs.process_dofs(mesh=mesh, displacements=displacements)
+print(f"Number of DOFs: {dofs.number_dofs}")
+print(f"Number of fixed DOFs: {dofs.number_fixed}")
+print(f"Number of free DOFs: {dofs.number_free}")
+print(f"Fixed DOFs: {dofs.fixed_dofs}")
+print(f"Free DOFs: {dofs.free_dofs}")
+
+# %%
+# Usage
+analysis = Analysis()
+# Assume mesh is an instance of the Mesh class with attributes set
+analysis.get_global_stiffness_matrix(mesh=mesh)
+analysis.get_global_force_vector(forces=forces, dofs=dofs)
+print(analysis.stiffness_global_matrix)
+print(analysis.stiffness_global_matrix.shape)
+print(analysis.stiffness_global_matrix.dtype)
+# %%
+print(analysis.force_global_vector)
+print(analysis.force_global_vector.shape)
+print(analysis.force_global_vector.dtype)
+# %%
+analysis.get_new_displacement_vector(displacements=displacements, dofs=dofs)
+print("New Displacement vector==============================")
+print(analysis.displacement_new_vector)
+print(analysis.displacement_new_vector.shape)
 # %%
