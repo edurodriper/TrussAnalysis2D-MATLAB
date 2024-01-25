@@ -164,6 +164,28 @@ class Analysis:
 
         self.displacement_new_vector = uc
 
+
+    def get_new_transformation_matrix(self, displacements, dofs):
+        number_dofs = dofs.number_dofs
+        number_roller = displacements.number_roller
+        roller_nodes = displacements.roller_nodes
+        roller_angles = displacements.roller_angles
+
+        tc = np.eye(number_dofs)
+
+        for i in range(number_roller):
+            r_node = roller_nodes[i]
+            r_dofs = [2 * r_node - 1, 2 * r_node]
+            r_angle = roller_angles[i]
+            c = np.cos(np.radians(r_angle))
+            s = np.sin(np.radians(r_angle))
+            t = np.array([[c, s], [-s, c]])
+            tc[np.ix_(r_dofs, r_dofs)] = t
+
+        self.transformation_new_matrix = tc
+
+
+
 class Solution:
     def __init__(self):
         self.new_displacements = None
@@ -173,6 +195,36 @@ class Solution:
         self.global_reactions = None
         self.element_stress = None
         self.element_force = None
+
+    def solve_displacement(self, analysis, dofs):
+        fixed_dofs = dofs.fixed_dofs
+        free_dofs = dofs.free_dofs
+        f = analysis.force_global_vector
+        uc = analysis.displacement_new_vector
+        tc = analysis.transformation_new_matrix
+        k = analysis.stiffness_global_matrix
+
+        # New force vector
+        fc = tc @ f
+        # New stiffness matrix
+        kc = tc @ k @ tc.T
+
+        # Free new displacements
+        uc[free_dofs] = np.linalg.solve(kc[np.ix_(free_dofs, free_dofs)], 
+                                        fc[free_dofs] - kc[np.ix_(free_dofs, fixed_dofs)] @ uc[fixed_dofs])
+
+        # Fixed new forces
+        fc[fixed_dofs] = kc[np.ix_(fixed_dofs, free_dofs)] @ uc[free_dofs] + \
+                         kc[np.ix_(fixed_dofs, fixed_dofs)] @ uc[fixed_dofs] - fc[fixed_dofs]
+
+        # Global displacement and force vectors
+        u = tc.T @ uc
+        f = tc.T @ fc
+
+        self.new_displacements = uc
+        self.new_forces = fc
+        self.global_displacements = u
+        self.global_forces = f
 
 class Plot:
     def __init__(self):
@@ -319,4 +371,21 @@ analysis.get_new_displacement_vector(displacements=displacements, dofs=dofs)
 print("New Displacement vector==============================")
 print(analysis.displacement_new_vector)
 print(analysis.displacement_new_vector.shape)
+# %%
+analysis.get_new_transformation_matrix(displacements=displacements, dofs=dofs)  
+print("New Transformation matrix==============================")
+print(analysis.transformation_new_matrix)
+print(f"New Transformation matrix shape: {analysis.transformation_new_matrix.shape}")
+print(f"New Transformation matrix dtype: {analysis.transformation_new_matrix.dtype}")   
+
+# %%
+# Usage
+solution = Solution()
+# Assume analysis and dofs are instances of their respective classes with attributes set
+solution.solve_displacement(analysis, dofs)
+print("Displacements==============================")
+print(solution.new_displacements)
+print(solution.new_displacements.shape)
+print(solution.new_displacements.dtype)
+
 # %%
