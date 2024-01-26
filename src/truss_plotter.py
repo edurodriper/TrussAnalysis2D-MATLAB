@@ -104,8 +104,8 @@ class TrussPlotter:
         ay_size = py_max - py_min
         
         # Figure size
-        fXSize = ax_size / 0.84;
-        fYSize = ay_size / 0.88;
+        fXSize = ax_size / 0.84
+        fYSize = ay_size / 0.88
 
         # Figure size and paper orientation
         if fXSize  > fYSize:
@@ -263,11 +263,19 @@ class TrussPlotter:
             plt.show()
         plt.close()
 
+    def plot_stress(self, info, mesh, forces, displacements, solution, save:bool=True, show:bool=True):
+        pass
+        NotImplementedError()
+
+    def plot_deformation(self, info, mesh, forces, displacements, solution, save:bool=True, show:bool=True):
+        pass
+        NotImplementedError()
 
 #%%
 
 if __name__ == '__main__':
-    pp_project_dir = pathlib.Path('example-np')
+    # pp_project_dir = pathlib.Path('example-np')
+    pp_project_dir = pathlib.Path('exam2024-01')
     info = Info(project_directory=str(pp_project_dir.absolute()), file_name='test')
 
     fileData = FileData.from_directory(info.project_directory)
@@ -295,14 +303,12 @@ if __name__ == '__main__':
     solution.solve_stress(mesh=mesh)
     # Usage example
     # Assume info, mesh, displacements, and solution are instances of their respective classes with attributes set
-    # write_results(info, mesh=mesh, displacements=displacements, solution=solution)
+    write_results(info, mesh=mesh, displacements=displacements, solution=solution)
 
     # %%
     tp = TrussPlotter()
     tp.get_plot_parameters(mesh=mesh, solution=solution)
 
-    # Usage example
-    # Assume info, plot, mesh, forces, and displacements are instances of their respective classes with attributes set
     tp.plot_truss(info,  mesh, forces, displacements, save=True, show=True)
 
 # %%

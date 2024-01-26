@@ -31,8 +31,10 @@ class Solution:
         kc = tc @ k @ tc.T
 
         # Free new displacements
-        uc[free_dofs] = np.linalg.solve(kc[np.ix_(free_dofs, free_dofs)], 
-                                        fc[free_dofs] - kc[np.ix_(free_dofs, fixed_dofs)] @ uc[fixed_dofs])
+        # uc[free_dofs] = np.linalg.solve(kc[np.ix_(free_dofs, free_dofs)], 
+        #             fc[free_dofs] - kc[np.ix_(free_dofs, fixed_dofs)] @ uc[fixed_dofs])
+        uc[free_dofs] = np.linalg.inv(kc[np.ix_(free_dofs, free_dofs)])@ fc[free_dofs] - kc[np.ix_(free_dofs, fixed_dofs)] @ uc[fixed_dofs]
+
 
         # Fixed new forces
         fc[fixed_dofs] = kc[np.ix_(fixed_dofs, free_dofs)] @ uc[free_dofs] + \
