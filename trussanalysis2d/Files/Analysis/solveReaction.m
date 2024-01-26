@@ -28,8 +28,11 @@ for numRol = 1 : numberRoller
 	rAngle = rollerAngles(numRol);
 	Rc = zeros(2, 1);
 	if (rDirection == 1)
+		% fixes the y direction
+		% assumes that the roller can roll in th x direction
 		fixedDOF = 2 * rNode;
 		Rc(2) = Fc(fixedDOF);
+		
 	else
 		fixedDOF = 2 * rNode - 1;
 		Rc(1) = Fc(fixedDOF);

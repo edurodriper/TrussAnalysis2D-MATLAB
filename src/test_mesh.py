@@ -106,3 +106,35 @@ def test_solution_solve_displacements(mesh_inst, displ, forces):
 
     expected_gl_forces = [2.6319e+04, 1.3160e+04, 0, 0, -1.8794e+04, -6.8404e+03, 3.2475e+04, -6.3193e+03, -4.0000e+04, -4.8984e-12]
     np.testing.assert_allclose(expected_gl_forces, solution.global_forces, rtol=1e-4)
+
+
+
+
+def test_solution_solve_reactions(mesh_inst, displ, forces):
+    """Transformation matrix test
+
+    """    
+    dofs = Dofs()
+    dofs.process_dofs(mesh=mesh_inst, displacements=displ)
+
+    analysis = Analysis()
+    # Assume mesh is an instance of the Mesh class with attributes set
+    analysis.get_global_stiffness_matrix(mesh=mesh_inst)
+    analysis.get_global_force_vector(forces=forces, dofs=dofs)
+    analysis.get_new_displacement_vector(displacements=displ, dofs=dofs)
+    analysis.get_new_transformation_matrix(displacements=displ, dofs=dofs) 
+    solution = Solution()
+    # Assume analysis and dofs are instances of their respective classes with attributes set
+    solution.solve_displacement(analysis, dofs)
+    solution.solve_reaction( displacements= displ) 
+    solution.solve_stress(mesh = mesh_inst)
+
+    expected_gl_reactions = [   [3.2475e+04 , 2.6319e+04],
+                               [-6.3193e+03,   1.3160e+04]]
+    np.testing.assert_allclose(expected_gl_reactions, solution.global_reactions, rtol=1e-4)
+
+    expected_el_stress = [   1.8794e+04,  -6.8404e+03,   1.5296e+04,  -1.3160e+04,  -1.3681e+04,  -2.8034e-02,  -2.9426e+04]
+    np.testing.assert_allclose(expected_el_stress, solution.element_stress, rtol=1e-4)
+
+    expected_el_forces = [   1.8794e+04,  -6.8404e+03,   1.5296e+04,  -1.3160e+04,  -1.3681e+04,  -2.8034e-02,  -2.9426e+04]
+    np.testing.assert_allclose(expected_el_forces, solution.element_force, rtol=1e-4)
