@@ -3,8 +3,9 @@ import tkinter as tk
 from tkinter import filedialog
 import csv
 import pathlib
-from truss_input import Info, FileData,Mesh,Displacements,Forces
+from truss_input import Info, FileData,Mesh,Displacements,Forces, write_input_data
 import numpy as np
+
 
 class Dofs:
     def __init__(self):
@@ -43,9 +44,6 @@ class Dofs:
         self.number_free = number_free_dofs
         self.fixed_dofs = fixed_dofs
         self.free_dofs = free_dofs
-
-
-
 
 class Analysis:
     # TODO the results of this class needs testing and validation
@@ -95,9 +93,21 @@ class Analysis:
                     k_global[dof_i - 1, dof_j - 1] += ke[row_index, col_index]
 
         self.stiffness_global_matrix = k_global
-        
 
-    def get_global_force_vector(self, forces, dofs):
+    def get_global_force_vector(self, forces:Forces, dofs:Dofs):
+        """
+        Calculates the global force vector based on the given forces and degrees of freedom.
+
+        Args:
+            forces (Forces): Object containing information about the forces applied to the truss.
+            dofs (Dofs): Object containing information about the degrees of freedom of the truss.
+
+        Returns:
+            None
+
+        Modifies:
+            Updates the `force_global_vector` attribute of the class instance.
+        """
         number_forces = forces.number_forces
         force_nodes = forces.force_nodes
         force_components = forces.force_components
@@ -165,7 +175,7 @@ class Analysis:
         self.displacement_new_vector = uc
 
 
-    def get_new_transformation_matrix(self, displacements, dofs):
+    def get_new_transformation_matrix(self, displacements:Displacements, dofs:Dofs):
         number_dofs = dofs.number_dofs
         number_roller = displacements.number_roller
         roller_nodes = displacements.roller_nodes
@@ -185,57 +195,7 @@ class Analysis:
         self.transformation_new_matrix = tc
 
 
-
-class Solution:
-    def __init__(self):
-        self.new_displacements = None
-        self.new_forces = None
-        self.global_displacements = None
-        self.global_forces = None
-        self.global_reactions = None
-        self.element_stress = None
-        self.element_force = None
-
-    def solve_displacement(self, analysis, dofs):
-        fixed_dofs = dofs.fixed_dofs
-        free_dofs = dofs.free_dofs
-        f = analysis.force_global_vector
-        uc = analysis.displacement_new_vector
-        tc = analysis.transformation_new_matrix
-        k = analysis.stiffness_global_matrix
-
-        # New force vector
-        fc = tc @ f
-        # New stiffness matrix
-        kc = tc @ k @ tc.T
-
-        # Free new displacements
-        uc[free_dofs] = np.linalg.solve(kc[np.ix_(free_dofs, free_dofs)], 
-                                        fc[free_dofs] - kc[np.ix_(free_dofs, fixed_dofs)] @ uc[fixed_dofs])
-
-        # Fixed new forces
-        fc[fixed_dofs] = kc[np.ix_(fixed_dofs, free_dofs)] @ uc[free_dofs] + \
-                         kc[np.ix_(fixed_dofs, fixed_dofs)] @ uc[fixed_dofs] - fc[fixed_dofs]
-
-        # Global displacement and force vectors
-        u = tc.T @ uc
-        f = tc.T @ fc
-
-        self.new_displacements = uc
-        self.new_forces = fc
-        self.global_displacements = u
-        self.global_forces = f
-
-class Plot:
-    def __init__(self):
-        self.plot_x_limits = None
-        self.plot_y_limits = None
-        self.paper_size = None
-        self.paper_position = None
-        self.scale_factor = None
-
 #%%
-
 if __name__ == '__main__':
     pp_project_dir = pathlib.Path('example-np')
     info = Info(project_directory=str(pp_project_dir.absolute()), file_name='test')
@@ -287,56 +247,6 @@ if __name__ == '__main__':
     print(f"Force components: {forces.force_components}")
 
     # %%
-    def write_input_data(info, mesh, displacements, forces):
-        project_dir = info.project_directory
-        file_name = info.file_name
-        new_file_name = f"{file_name}_DATA.dat"
-        file_path = f"{project_dir}/{new_file_name}"
-
-        with open(file_path, 'w') as file:
-            bar_line = '-' * 40
-
-            # Writing node coordinates
-            file.write('     NODE COORDINATES\n')
-            file.write(f'{bar_line}\n')
-            file.write('NODE       X(M)        Y(M)\n')
-            for i, (x, y) in enumerate(mesh.node_coordinates, start=1):
-                file.write(f'{i:<4} {x:11.3f} {y:11.3f}\n')
-            file.write('\n')
-
-            # Writing elements
-            file.write(' ELEMENTS\n')
-            file.write(f'{bar_line}\n')
-            file.write('EL.  NODE1  NODE2      A(M2)     E(PA)\n')
-            for i, ((node1, node2), a, e) in enumerate(zip(mesh.element_connectivity, mesh.area, mesh.young_modulus), start=1):
-                file.write(f'{i:<3} {node1:<6} {node2:<6} {a:11.6G} {e:10.5G}\n')
-            file.write('\n')
-
-            # Writing pin supports
-            if displacements.number_pin > 0:
-                file.write('  PIN SUPPORTS\n')
-                file.write(f'{bar_line}\n')
-                file.write('NODE    DX\'(M)    DY\'(M)   ANGLE(DEG)\n')
-                for node, (dx, dy), angle in zip(displacements.pin_nodes, displacements.pin_displacements, displacements.pin_angles):
-                    file.write(f'{node:<4} {dx:11.3f} {dy:11.3f} {angle:11.2f}\n')
-                file.write('\n')
-
-            # Writing roller supports
-            if displacements.number_roller > 0:
-                file.write('ROLLER SUPPORTS\n')
-                file.write(f'{bar_line}\n')
-                file.write('NODE   DIRECTION   DN(M)   ANGLE(DEG)\n')
-                for node, direction, dn, angle in zip(displacements.roller_nodes, displacements.roller_directions, displacements.roller_displacements, displacements.roller_angles):
-                    file.write(f'{node:<4} {direction:<11} {dn:11.3f} {angle:11.2f}\n')
-                file.write('\n')
-
-            # Writing forces
-            file.write(' FORCES\n')
-            file.write(f'{bar_line}\n')
-            file.write('NODE     FX\'(N)     FY\'(N)   ANGLE(DEG)\n')
-            for node, (fx, fy), angle in zip(forces.force_nodes, forces.force_components, forces.force_angles):
-                file.write(f'{node:<4} {fx:11.6G} {fy:11.6G} {angle:11.2f}\n')
-
     # Usage example
     # Assume info, mesh, displacements, and forces are instances of their respective classes with attributes set
     write_input_data(info=info, mesh=mesh, displacements=displacements, forces=forces)
@@ -377,15 +287,3 @@ if __name__ == '__main__':
     print(analysis.transformation_new_matrix)
     print(f"New Transformation matrix shape: {analysis.transformation_new_matrix.shape}")
     print(f"New Transformation matrix dtype: {analysis.transformation_new_matrix.dtype}")   
-
-    # %%
-    # Usage
-    solution = Solution()
-    # Assume analysis and dofs are instances of their respective classes with attributes set
-    solution.solve_displacement(analysis, dofs)
-    print("Displacements==============================")
-    print(solution.new_displacements)
-    print(solution.new_displacements.shape)
-    print(solution.new_displacements.dtype)
-
-    # %%

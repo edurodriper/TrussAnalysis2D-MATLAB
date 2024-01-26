@@ -207,3 +207,60 @@ class Forces:
             self.force_components.append((file_data[file_line][2], file_data[file_line][3],))
             file_line += 1
 
+
+
+def write_input_data(info, mesh, displacements, forces):
+    """Write input data for the problem to a file	
+
+    Includes mesh, Displacements, and Forces data
+    """
+    project_dir = info.project_directory
+    file_name = info.file_name
+    new_file_name = f"{file_name}_DATA.dat"
+    file_path = f"{project_dir}/{new_file_name}"
+
+    with open(file_path, 'w') as file:
+        bar_line = '-' * 40
+
+        # Writing node coordinates
+        file.write('     NODE COORDINATES\n')
+        file.write(f'{bar_line}\n')
+        file.write('NODE       X(M)        Y(M)\n')
+        for i, (x, y) in enumerate(mesh.node_coordinates, start=1):
+            file.write(f'{i:<4} {x:11.3f} {y:11.3f}\n')
+        file.write('\n')
+
+        # Writing elements
+        file.write(' ELEMENTS\n')
+        file.write(f'{bar_line}\n')
+        file.write('EL.  NODE1  NODE2      A(M2)     E(PA)\n')
+        for i, ((node1, node2), a, e) in enumerate(zip(mesh.element_connectivity, mesh.area, mesh.young_modulus), start=1):
+            file.write(f'{i:<3} {node1:<6} {node2:<6} {a:11.6G} {e:10.5G}\n')
+        file.write('\n')
+
+        # Writing pin supports
+        if displacements.number_pin > 0:
+            file.write('  PIN SUPPORTS\n')
+            file.write(f'{bar_line}\n')
+            file.write('NODE    DX\'(M)    DY\'(M)   ANGLE(DEG)\n')
+            for node, (dx, dy), angle in zip(displacements.pin_nodes, displacements.pin_displacements, displacements.pin_angles):
+                file.write(f'{node:<4} {dx:11.3f} {dy:11.3f} {angle:11.2f}\n')
+            file.write('\n')
+
+        # Writing roller supports
+        if displacements.number_roller > 0:
+            file.write('ROLLER SUPPORTS\n')
+            file.write(f'{bar_line}\n')
+            file.write('NODE   DIRECTION   DN(M)   ANGLE(DEG)\n')
+            for node, direction, dn, angle in zip(displacements.roller_nodes, displacements.roller_directions, displacements.roller_displacements, displacements.roller_angles):
+                file.write(f'{node:<4} {direction:<11} {dn:11.3f} {angle:11.2f}\n')
+            file.write('\n')
+
+        # Writing forces
+        file.write(' FORCES\n')
+        file.write(f'{bar_line}\n')
+        file.write('NODE     FX\'(N)     FY\'(N)   ANGLE(DEG)\n')
+        for node, (fx, fy), angle in zip(forces.force_nodes, forces.force_components, forces.force_angles):
+            file.write(f'{node:<4} {fx:11.6G} {fy:11.6G} {angle:11.2f}\n')
+
+
