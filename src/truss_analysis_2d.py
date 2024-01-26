@@ -44,7 +44,20 @@ class Dofs:
         self.number_free = number_free_dofs
         self.fixed_dofs = fixed_dofs
         self.free_dofs = free_dofs
-
+    @property
+    def free_dofs_zero_based(self):
+        """
+        Returns a list of zero-based degrees of freedom (DOFs) for the free DOFs.
+        """
+        return [dof-1 for dof in self.free_dofs]
+    
+    @property
+    def fixed_dofs_zero_based(self):
+        """
+        Returns a list of zero-based degrees of freedom (DOFs) for the fixed DOFs.
+        """
+        return [dof-1 for dof in self.fixed_dofs]
+    
 class Analysis:
     # TODO the results of this class needs testing and validation
     # against the MAtlab code

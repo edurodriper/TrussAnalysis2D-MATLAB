@@ -18,8 +18,8 @@ class Solution:
         self.element_force = None
 
     def solve_displacement(self, analysis, dofs):
-        fixed_dofs = dofs.fixed_dofs
-        free_dofs = dofs.free_dofs
+        fixed_dofs = (np.array([dofs.fixed_dofs])-1).flatten()
+        free_dofs = (np.array([dofs.free_dofs])-1).flatten()
         f = analysis.force_global_vector
         uc = analysis.displacement_new_vector
         tc = analysis.transformation_new_matrix
@@ -60,7 +60,7 @@ class Plot:
 if __name__ == '__main__':
     pp_project_dir = pathlib.Path('example-np')
     info = Info(project_directory=str(pp_project_dir.absolute()), file_name='test')
-    # %%
+
     fileData = FileData.from_directory(info.project_directory)
     mesh = Mesh()
     mesh.process_mesh(file_data= fileData.mesh)
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     analysis.get_global_force_vector(forces=forces, dofs=dofs)
     analysis.get_new_displacement_vector(displacements=displacements, dofs=dofs)
     analysis.get_new_transformation_matrix(displacements=displacements, dofs=dofs)  
- #%%
+    #%%
     solution = Solution()
     # Assume analysis and dofs are instances of their respective classes with attributes set
     solution.solve_displacement(analysis, dofs)
@@ -89,3 +89,29 @@ if __name__ == '__main__':
     print(solution.new_displacements.dtype)
 
     # %%
+    fixed_dofs = (np.array([dofs.fixed_dofs])-1).flatten()
+    free_dofs = (np.array([dofs.free_dofs])-1).flatten()
+    f = analysis.force_global_vector
+    uc = analysis.displacement_new_vector
+    tc = analysis.transformation_new_matrix
+    k = analysis.stiffness_global_matrix
+
+    # New force vector
+    fc = tc @ f
+    # New stiffness matrix
+    kc = tc @ k @ tc.T
+
+    # Free new displacements
+    uc[free_dofs] = np.linalg.solve(kc[np.ix_(free_dofs, free_dofs)], 
+                                    fc[free_dofs] - kc[np.ix_(free_dofs, fixed_dofs)] @ uc[fixed_dofs])
+
+    # Fixed new forces
+    fc[fixed_dofs] = kc[np.ix_(fixed_dofs, free_dofs)] @ uc[free_dofs] + \
+                        kc[np.ix_(fixed_dofs, fixed_dofs)] @ uc[fixed_dofs] - fc[fixed_dofs]
+
+    # Global displacement and force vectors
+    u = tc.T @ uc
+    f = tc.T @ fc
+
+    
+# %%

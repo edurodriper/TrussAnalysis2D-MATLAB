@@ -92,6 +92,17 @@ def test_solution_solve_displacements(mesh_inst, displ, forces):
     # Assume analysis and dofs are instances of their respective classes with attributes set
     solution.solve_displacement(analysis, dofs)
     
-    expected =   [0, 3.2521e-07,  -5.2783e-07, 2.9088e-07, -3.7588e-07, 2.2248e-07, 0, 0,   -8.0144e-07, 1.3160e-07]
+    expected =   [0, 3.2521e-07,  -5.2783e-07, 2.9088e-07, -3.7588e-07, 2.2248e-07, 
+                  0, 0,   -8.0144e-07, 1.3160e-07]
 
     np.testing.assert_allclose(expected, solution.new_displacements, rtol=1e-5, atol=1e-5)
+    expected_new_forces = [  2.9426e+04, 0, 0, 0, -1.8794e+04,  -6.8404e+03,   
+            3.2475e+04,  -6.3193e+03,  -4.0000e+04,  -4.8984e-12]
+    np.testing.assert_allclose(expected_new_forces, solution.new_forces, rtol=1e-4)
+
+    expected_gl_displ = [ -1.4544e-07,2.9088e-07, -5.2783e-07, 2.9088e-07,  
+            -3.7588e-07, 2.2248e-07,  0, 0,  -8.0144e-07, 1.3160e-07]
+    np.testing.assert_allclose(expected_gl_displ, solution.global_displacements, rtol=1e-4)
+
+    expected_gl_forces = [2.6319e+04, 1.3160e+04, 0, 0, -1.8794e+04, -6.8404e+03, 3.2475e+04, -6.3193e+03, -4.0000e+04, -4.8984e-12]
+    np.testing.assert_allclose(expected_gl_forces, solution.global_forces, rtol=1e-4)
