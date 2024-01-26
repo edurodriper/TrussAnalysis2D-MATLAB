@@ -139,3 +139,4 @@ In example 2, all members properties are **E = 200 GPa** and **A = 0.0015 m^2^**
 ## Author
 
 - Eduardo Pereira
+- Nikolaos Papadakis 
