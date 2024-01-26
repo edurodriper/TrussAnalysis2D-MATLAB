@@ -2,7 +2,8 @@ import pytest
 import numpy as np
 from truss_input import Mesh, Displacements, Forces
 from truss_analysis_2d import Dofs, Analysis
-from truss_solution import Solution, TrussPlotter
+from truss_solution import Solution
+from truss_plotter import TrussPlotter
 
 
 @pytest.fixture

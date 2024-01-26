@@ -101,7 +101,7 @@ class Solution:
             s = np.sin(np.radians(r_angle))
             rot = np.array([[c, s], [-s, c]])
             r[:, s_node] = rot.T @ rc
-            print(f"{r[:, s_node] }")
+            # logging.debug(f"{r[:, s_node] }")
             s_node += 1
 
         self.global_reactions = r
@@ -219,75 +219,6 @@ def write_results(info, mesh, displacements, solution):
             file.write(f'{s_node:<4} {react_x:11.3E} {react_y:11.3E} {react_m:11.3E}\n')
 
 
-
-class TrussPlotter:
-    def __init__(self):
-        self.plot_x_limits = None
-        self.plot_y_limits = None
-        self.paper_size = None
-        self.paper_position = None
-        self.plot_scale = None
-        self.scale_factor = None
-
-    def get_plot_parameters(self, mesh, solution):
-        node_coordinates = np.array(mesh.node_coordinates)
-        node_displacements = np.array(solution.global_displacements)
-
-        # Node coordinates
-        nc_x = node_coordinates[:, 0]
-        nc_y = node_coordinates[:, 1]
-
-        # Truss limits
-        tx_min = np.min(nc_x)
-        tx_max = np.max(nc_x)
-        ty_min = np.min(nc_y)
-        ty_max = np.max(nc_y)
-
-        # Truss size
-        tx_size = tx_max - tx_min
-        ty_size = ty_max - ty_min
-
-        # Margins
-        margins = 0.09 * max(tx_size, ty_size)
-
-        # Plot limits
-        px_min = tx_min - margins
-        px_max = tx_max + margins
-        py_min = ty_min - margins
-        py_max = ty_max + margins
-        plot_x_limits = [px_min, px_max]
-        plot_y_limits = [py_min, py_max]
-
-        # Axis size
-        ax_size = px_max - px_min
-        ay_size = py_max - py_min
-
-        # Figure size and paper orientation
-        if ax_size > ay_size:
-            paper_size = [29.7, 21.0]  # A4 landscape
-            if ax_size / ay_size > 297 / 210:
-                plot_scale = 29.7 / ax_size
-            else:
-                plot_scale = 21.0 / ay_size
-        else:
-            paper_size = [21.0, 29.7]  # A4 portrait
-            if ax_size / ay_size > 210 / 297:
-                plot_scale = 21.0 / ax_size
-            else:
-                plot_scale = 29.7 / ay_size
-        paper_position = [0, 0] + paper_size
-
-        # Deformed scale factor
-        max_displ = np.max(np.abs(node_displacements))
-        scale_factor = margins * 0.5 / max_displ if max_displ != 0 else 0
-
-        self.plot_x_limits = plot_x_limits
-        self.plot_y_limits = plot_y_limits
-        self.paper_size = paper_size
-        self.paper_position = paper_position
-        self.plot_scale = plot_scale
-        self.scale_factor = scale_factor
-
 #%%
 
 if __name__ == '__main__':
@@ -336,8 +267,3 @@ if __name__ == '__main__':
     # Usage example
     # Assume info, mesh, displacements, and solution are instances of their respective classes with attributes set
     write_results(info, mesh=mesh, displacements=displacements, solution=solution)
-
-    # %%
-    tp = TrussPlotter()
-    tp.get_plot_parameters(mesh=mesh, solution=solution)
-# %%
