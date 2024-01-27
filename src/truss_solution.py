@@ -17,7 +17,7 @@ class Solution:
         self.element_stress = None
         self.element_force = None
 
-    def solve_displacement(self, analysis, dofs):
+    def solve_displacement(self, analysis:Analysis, dofs:Dofs):
         fixed_dofs = (np.array([dofs.fixed_dofs])-1).flatten()
         free_dofs = (np.array([dofs.free_dofs])-1).flatten()
         f = analysis.force_global_vector
@@ -50,7 +50,7 @@ class Solution:
         self.global_forces = f
 
 
-    def solve_reaction(self, displacements):
+    def solve_reaction(self, displacements:Displacements):
         """returns the global reactions in a 2x(number of supports) array
 
         row 1 : x component
@@ -147,6 +147,21 @@ class Solution:
         self.element_stress = element_stress
         self.element_force = element_force
 
+
+    def get_max_displacement(self)->float:
+        """Returns the maximum displacement
+
+        convenience method to obtain the maximum displacement for the paper size. 
+
+        Returns:
+            float: maximum displacement or 0 if no displacements are available
+        """
+        try:
+            u = self.global_displacements
+            return np.max(np.abs(u))
+        except TypeError:
+            return 0
+
     def report_displacements(self, mesh:Mesh)->str:
         """Returns a string with the displacements report
 
@@ -170,7 +185,7 @@ class Solution:
             ret_str+=(f'{i+1:<4} {displ_x:11.3E} {displ_y:11.3E} {displ_m:11.3E}\n')
         return ret_str
 
-def write_results(info, mesh, displacements, solution):
+def write_results(info, mesh:Mesh, displacements:Displacements, solution:Solution):
     project_dir = info.project_directory
     file_name = info.file_name
     number_nodes = mesh.number_nodes

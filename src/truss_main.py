@@ -11,6 +11,7 @@ from truss_plotter import TrussPlotter
 
 
 pp_project_dir = pathlib.Path('exam2024-01')
+pp_project_dir = pathlib.Path('../examples/example_101')
 FNAME_PREFIX = 'test'
 #%%
 

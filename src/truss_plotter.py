@@ -70,9 +70,10 @@ class TrussPlotter:
         self.plot_scale = None
         self.scale_factor = None
 
-    def get_plot_parameters(self, mesh, solution):
+    def get_plot_parameters(self, mesh:Mesh, solution:Solution=None):
         node_coordinates = np.array(mesh.node_coordinates)
-        node_displacements = np.array(solution.global_displacements)
+        # node_displacements = np.array(solution.global_displacements) if Solution is not None else np.zeros_like(node_coordinates)
+        node_displacements_max = solution.get_max_displacement()
 
         # Node coordinates
         nc_x = node_coordinates[:, 0]
@@ -123,7 +124,7 @@ class TrussPlotter:
         paper_position = [0, 0] + paper_size
 
         # Deformed scale factor
-        max_displ = np.max(np.abs(node_displacements))
+        max_displ = np.max(np.abs(node_displacements_max))
         scale_factor = margins * 0.5 / max_displ if max_displ != 0 else 0
 
         self.plot_x_limits = plot_x_limits
