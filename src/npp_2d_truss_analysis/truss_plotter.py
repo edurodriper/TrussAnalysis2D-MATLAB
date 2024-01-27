@@ -6,9 +6,9 @@ from tkinter import filedialog
 
 import matplotlib.pyplot as plt
 
-from truss_input import Info, FileData,Mesh,Displacements,Forces, write_input_data
-from truss_analysis_2d import Dofs, Analysis
-from truss_solution import Solution, write_results
+from npp_2d_truss_analysis.truss_input import Info, FileData,Mesh,Displacements,Forces, write_input_data
+from npp_2d_truss_analysis.truss_analysis_2d import Dofs, Analysis
+from npp_2d_truss_analysis.truss_solution import Solution, write_results
 
 
 def get_roller_lines(app_point, dir_vector, plot_scale):

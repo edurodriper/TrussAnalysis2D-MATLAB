@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import filedialog
 import csv
 import pathlib
-from truss_input import Info, FileData,Mesh,Displacements,Forces, write_input_data
+from npp_2d_truss_analysis.truss_input import Info, FileData,Mesh,Displacements,Forces, write_input_data
 import numpy as np
 
 
