@@ -1,5 +1,5 @@
 import pytest
-from truss_input import Mesh, Displacements, Forces
+from npp_2d_truss_analysis.truss_input import Mesh, Displacements, Forces
 
 @pytest.fixture
 def mesh_data():
