@@ -73,7 +73,7 @@ class TrussPlotter:
     def get_plot_parameters(self, mesh:Mesh, solution:Solution=None):
         node_coordinates = np.array(mesh.node_coordinates)
         # node_displacements = np.array(solution.global_displacements) if Solution is not None else np.zeros_like(node_coordinates)
-        node_displacements_max = solution.get_max_displacement()
+        node_displacements_max = solution.get_max_displacement() if solution is not None else 0
 
         # Node coordinates
         nc_x = node_coordinates[:, 0]

@@ -159,7 +159,7 @@ class Solution:
         try:
             u = self.global_displacements
             return np.max(np.abs(u))
-        except TypeError:
+        except (TypeError, AttributeError):
             return 0
 
     def report_displacements(self, mesh:Mesh)->str:
