@@ -58,6 +58,32 @@ class TrussAnalysisProject:
         # Assume info, plot, mesh, forces, and displacements are instances of their respective classes with attributes set
         self._tp.plot_truss(self._info, self._mesh, self._forces, self._displacements, save=save, show=show)
 
+
+    def report_reactions(self, fmt:str = '.3g'):
+        """prints the reaction forces on each support using a specified format"""
+        print('Reaction forces:')
+        print('|- Pinned Nodes:')
+        for i in range(self._displacements.number_pin):
+            f_x = self._solution.global_reactions[i][0]
+            f_y = self._solution.global_reactions[i][1]
+            print(f"|   |- Node {self._displacements.pin_nodes[i]} = {format(f_x, fmt)}, {format(f_y, fmt)}")
+        print('|- Roller Nodes:')
+        for i in range(self._displacements.number_roller):
+            j = i + self._displacements.number_pin
+            f_x = self._solution.global_reactions[j][0]
+            f_y = self._solution.global_reactions[j][1]
+            print(f"|   |- Node {self._displacements.roller_nodes[i]} = {format(f_x, fmt)}, {format(f_y, fmt)}")
+
+
+    def report_rod_forces(self, fmt:str = '.3g'):
+        """prints the  forces on each member using a specified format"""
+        print('Rods forces:')
+        for i in range(self._mesh.number_elements):
+            f = self._solution.element_force[i]
+            print(f"|   |- Rod {i+1} = {format(f, fmt)}")
+
+
+
 if __name__ == "__main__":
     
     pp_project_dir = pathlib.Path('exam2024-01')

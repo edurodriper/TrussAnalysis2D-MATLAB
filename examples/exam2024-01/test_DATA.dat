@@ -31,5 +31,5 @@ NODE   DIRECTION   DN(M)   ANGLE(DEG)
  FORCES
 ----------------------------------------
 NODE     FX'(N)     FY'(N)   ANGLE(DEG)
-5          40000           0     -180.00
+5          80000           0     -180.00
 3          20000           0      200.00

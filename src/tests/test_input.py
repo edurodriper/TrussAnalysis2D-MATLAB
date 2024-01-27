@@ -44,8 +44,17 @@ def test_displ(displ_data):
     displ.process_displacements(displ_data)
     assert displ.number_pin == 1
     assert displ.pin_nodes == [4]   
-    assert displ.pin_angles == [0.0]
     assert displ.pin_displacements == [(0.0, 0.0)]
+    assert displ.pin_angles == [0.0]
+    assert displ.number_roller == 1
+    assert displ.roller_nodes == [1]   
+    assert displ.roller_directions == [2]
+    assert displ.roller_angles == [26.5651]
+    assert displ.roller_displacements == [0.0]
+    assert displ.number_support == 2
+    assert displ.support_nodes == [4,1]
+
+
 
 def test_forces(forces_data):
     forces = Forces()

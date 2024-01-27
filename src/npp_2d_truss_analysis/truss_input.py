@@ -1,11 +1,15 @@
+#%%
+import logging
+import csv
+import json
+import pathlib
+
 import numpy as np
 import tkinter as tk
 from tkinter import filedialog
-import csv
-import pathlib
 
-import logging
 logging.basicConfig(level=logging.DEBUG)
+
 def read_file(file_name, file_path):
     file_data = []
 
@@ -132,6 +136,26 @@ class Mesh:
         self.young_modulus = [material_e[mat - 1] for mat in element_material]
         self.area = [material_a[mat - 1] for mat in element_material]
 
+    def process_mesh_json(self, json_data):
+        # Parse JSON data
+        data = json.loads(json_data)
+
+        # Process node data
+        self.node_coordinates = [(node["coordinates"][0], node["coordinates"][1]) for node in data["nodes"]]
+        self.number_nodes = len(data["nodes"])
+        # Process element data
+        self.number_elements = len(data["elements"])
+        self.element_connectivity = [(element["connectivity"][0], element["connectivity"][1]) for element in data["elements"]]
+        element_material = [element["materialId"] for element in data["elements"]]
+
+        # Process material data
+        material_dict = {material["id"]: (material["youngModulus"], material["area"]) for material in data["materials"]}
+
+        # Assigning Young's modulus and area to elements
+        self.young_modulus = [material_dict[mat][0] for mat in element_material]
+        self.area = [material_dict[mat][1] for mat in element_material]
+
+
 
 class Displacements:
     def __init__(self):
@@ -180,9 +204,29 @@ class Displacements:
         self.number_support = self.number_pin + self.number_roller
         self.support_nodes = self.pin_nodes + self.roller_nodes
 
+    def process_json(self, json_data:str):
+        # Parse JSON data
+        data = json.loads(json_data)
+
+        # Process pin data
+        self.number_pin = len(data["pin"])
+        self.pin_nodes = [pin["node"] for pin in data["pin"]]
+        self.pin_angles = [pin["angle"] for pin in data["pin"]]
+        self.pin_displacements = [(pin["dx"], pin["dy"]) for pin in data["pin"]]
+        
+
+        # Process roller data
+        self.roller_nodes = [roller["node"] for roller in data["rollers"]]
+        self.roller_directions = [roller["direction"] for roller in data["rollers"]]
+        self.roller_angles = [roller["angle"] for roller in data["rollers"]]
+        self.roller_displacements = [roller["dx"] for roller in data["rollers"]]
+        self.number_roller = len(self.roller_nodes)
+
+        # Process support data
+        self.number_support = self.number_pin + self.number_roller
+        self.support_nodes = self.pin_nodes + self.roller_nodes
 
 
-# Now the 'displacements' instance has its attributes set based on the file data
 
 
 class Forces:

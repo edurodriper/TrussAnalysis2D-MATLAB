@@ -13,39 +13,17 @@ from npp_2d_truss_analysis.truss_project import TrussAnalysisProject
 
 #%%
 
-pp_project_dir = pathlib.Path('exam2024-01')
+pp_project_dir = pathlib.Path('./')
 # pp_project_dir = pathlib.Path('../examples/example_101')
 FNAME_PREFIX = 'test'
 
 
 info = Info(project_directory=str(pp_project_dir.absolute()), file_name=FNAME_PREFIX)
 
-fileData = FileData.from_directory(info.project_directory)
+
 mesh = Mesh()
-mesh.process_mesh(file_data= fileData.mesh)
-
-displacements = Displacements()
-displacements.process_displacements(file_data= fileData.displacements)
-forces = Forces()
-forces.process_forces(file_data= fileData.forces)
-truss_problem = TrussAnalysisProject(info=info, mesh=mesh, displacements=displacements, forces=forces)
-
-#%%
-forces.force_components[0] = (80000,0)
-#%%
-
-truss_problem.write_input_data()
-truss_problem.solve()
-# truss_problem.plot_truss(save=True, show=True)
-# %%
-# %%
-truss_problem.report_reactions(fmt='>12.1f')
-truss_problem.report_rod_forces(fmt='>12.1f')
-
-# %%
-
-
-json_data ="""{
+# mesh.process_mesh(file_data= fileData.mesh)
+mesh_json_data ="""{
   "nodes": [
     {"id": 1, "coordinates": [0, 0]},
     {"id": 2, "coordinates": [0, 2]},
@@ -66,6 +44,40 @@ json_data ="""{
     {"id": 1, "youngModulus": 200000000000.0, "area": 1.0}
   ]
 }"""
+mesh.process_mesh_json(json_data=mesh_json_data)
+
+
+displacements = Displacements()
+displ_json_data ="""{
+  "pin": [
+    {"id": 1, "node":4, "angle": 0:,"dx": 0, "dy":0}
+  ],
+  "rollers": [
+    {"id": 1, "node": 1, "direction": 1, "angle": -63.4349, "dx":0}
+  ]
+}"""
+
+# displacements.process_displacements(file_data= fileData.displacements)
+
+forces = Forces()
+forces.process_forces(file_data= fileData.forces)
+truss_problem = TrussAnalysisProject(info=info, mesh=mesh, displacements=displacements, forces=forces)
+
+#%%
+forces.force_components[0] = (80000,0)
+#%%
+
+truss_problem.write_input_data()
+truss_problem.solve()
+# truss_problem.plot_truss(save=True, show=True)
+# %%
+# %%
+truss_problem.report_reactions(fmt='>12.1f')
+truss_problem.report_rod_forces(fmt='>12.1f')
+
+# %%
+
+
 
 m_j = Mesh() 
 # %%
