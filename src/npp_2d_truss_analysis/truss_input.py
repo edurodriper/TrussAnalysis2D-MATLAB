@@ -136,9 +136,17 @@ class Mesh:
         self.young_modulus = [material_e[mat - 1] for mat in element_material]
         self.area = [material_a[mat - 1] for mat in element_material]
 
-    def process_mesh_json(self, json_data):
+    def process_mesh_json(self, json_data:str):
         # Parse JSON data
         data = json.loads(json_data)
+
+        try:
+            #This will happer if a single JSON file for the entire problem is used
+            data = data["mesh"]
+        except:
+            pass
+        finally:
+            assert data.get("nodes", None) is not None, "Missing mesh data"
 
         # Process node data
         self.node_coordinates = [(node["coordinates"][0], node["coordinates"][1]) for node in data["nodes"]]
@@ -155,7 +163,11 @@ class Mesh:
         self.young_modulus = [material_dict[mat][0] for mat in element_material]
         self.area = [material_dict[mat][1] for mat in element_material]
 
-
+    @classmethod
+    def from_json(cls, json_data:str):
+        mesh = cls()
+        mesh.process_mesh_json(json_data)
+        return mesh
 
 class Displacements:
     def __init__(self):
@@ -207,6 +219,15 @@ class Displacements:
     def process_json(self, json_data:str):
         # Parse JSON data
         data = json.loads(json_data)
+        try:
+            #This will happer if a single JSON file for the entire problem is used
+            data = data["displacements"]
+        except:
+            pass
+        finally:
+            assert data.get("pin", None) is not None, "Missing displacements pin data section"
+            assert data.get("rollers", None) is not None, "Missing displacements roller data section"
+
 
         # Process pin data
         self.number_pin = len(data["pin"])
@@ -226,6 +247,11 @@ class Displacements:
         self.number_support = self.number_pin + self.number_roller
         self.support_nodes = self.pin_nodes + self.roller_nodes
 
+    @classmethod
+    def from_json(cls, json_str:str):
+        displacements = cls()
+        displacements.process_json(json_str)
+        return displacements
 
 class Forces:
     def __init__(self):
@@ -309,7 +335,7 @@ class Forces:
             self.force_angles[force_id] = angle
 
     @classmethod
-    def from_json(cls, json_str:str):
+    def from_json_str(cls, json_str:str):
         """
         Create a Forces instance from JSON data.
 

@@ -82,7 +82,26 @@ class TrussAnalysisProject:
             f = self._solution.element_force[i]
             print(f"|   |- Rod {i+1} = {format(f, fmt)}")
 
+    @classmethod
+    def from_json_file(cls, json_file_name:str, info:Info):
+        # read the JSON_FILE_NAME file content into json_problem_data string
+        if isinstance(json_file_name, pathlib.Path):
+            json_file_name = str(json_file_name.absolute())
+        with open(json_file_name, 'r') as json_file:
+            json_problem_data = json_file.read()
 
+        return cls.from_json(json_text=json_problem_data, info=info)
+
+    @classmethod
+    def from_json(cls,  json_text:str, info:Info=None):
+        
+        mesh = Mesh.from_json(json_data=json_text)
+
+        displacements = Displacements.from_json(json_str=json_text)
+        # displacements.process_displacements(file_data= fileData.displacements)
+
+        forces = Forces.from_json_str(json_text)
+        return cls(info=info, mesh=mesh, displacements=displacements, forces=forces)
 
 if __name__ == "__main__":
     

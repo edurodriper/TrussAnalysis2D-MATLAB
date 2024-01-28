@@ -20,7 +20,7 @@ def test_forces_json(forces_json_data):
 
 
 def test_forces_from_json(forces_json_data):
-    forces = Forces.from_json(forces_json_data)
+    forces = Forces.from_json_str(forces_json_data)
     assert forces.number_forces == 2
     assert forces.force_nodes == [5, 3]
     assert forces.force_components ==  [(40000.0, 0.0), (20000.0, 0.0)]
@@ -28,7 +28,7 @@ def test_forces_from_json(forces_json_data):
 
 
 def test_forces_update_force_node(forces_json_data):
-    forces = Forces.from_json(forces_json_data)
+    forces = Forces.from_json_str(forces_json_data)
 
     f0bef = forces.get_force_by_id(id=0)
     assert 0 == f0bef['id']
@@ -58,7 +58,7 @@ def test_forces_update_force_node(forces_json_data):
     assert 160 == f0aft['angle']
 
 def test_force_invalid_updates(forces_json_data):
-    forces = Forces.from_json(forces_json_data)
+    forces = Forces.from_json_str(forces_json_data)
     # invalid ID node
     with pytest.raises(ValueError):
         forces.update_force_by_id(force_id=-1, node=4)

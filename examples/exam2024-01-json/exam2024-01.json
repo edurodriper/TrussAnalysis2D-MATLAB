@@ -1,0 +1,35 @@
+{
+    "mesh":{
+        "nodes": [
+        {"id": 1, "coordinates": [0, 0]},
+        {"id": 2, "coordinates": [0, 2]},
+        {"id": 3, "coordinates": [0, 4]},
+        {"id": 4, "coordinates": [4, 4]},
+        {"id": 5, "coordinates": [4, 2]}
+        ],
+        "elements": [
+        {"id": 1, "connectivity": [4, 3], "materialId": 1},
+        {"id": 2, "connectivity": [3, 2], "materialId": 1},
+        {"id": 3, "connectivity": [2, 4], "materialId": 1},
+        {"id": 4, "connectivity": [4, 5], "materialId": 1},
+        {"id": 5, "connectivity": [5, 2], "materialId": 1},
+        {"id": 6, "connectivity": [2, 1], "materialId": 1},
+        {"id": 7, "connectivity": [1, 5], "materialId": 1}
+        ],
+        "materials": [
+        {"id": 1, "youngModulus": 200000000000.0, "area": 1.0}
+        ]
+    },
+    "displacements":{
+        "pin": [
+        {"id": 1, "node":4, "angle": 0,"dx": 0, "dy":0}
+        ],
+        "rollers": [
+        {"id": 1, "node": 1, "direction": 1, "angle": -63.4349, "dx":0}
+        ]
+    },
+    "forces": [
+      {"id": 1, "node":5, "direction": -180,"x": 40000, "y":0},
+      {"id": 2, "node":3, "direction":  200,"x": 20000, "y":0}
+    ]
+}

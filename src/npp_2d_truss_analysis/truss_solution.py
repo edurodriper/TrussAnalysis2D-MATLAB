@@ -81,7 +81,7 @@ class Solution:
             p_node = pin_nodes[i]
             fixed_dofs = [2 * (p_node-1) , 2 * (p_node-1)+1]
             r[:, s_node] = fc[fixed_dofs]
-            print(f"{r[:, s_node] }")
+            # print(f"{r[:, s_node] }")
             s_node += 1
 
         # Roller support

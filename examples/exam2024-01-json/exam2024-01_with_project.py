@@ -65,7 +65,7 @@ force_json_data ="""{
     {"id": 2, "node":1, "direction":  200,"x": 20000, "y":0}
   ]
 }"""
-forces = Forces.from_json(force_json_data)
+forces = Forces.from_json_str(force_json_data)
 
 truss_problem = TrussAnalysisProject(info=info, mesh=mesh, displacements=displacements, forces=forces)
 
