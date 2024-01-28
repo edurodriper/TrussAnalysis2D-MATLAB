@@ -66,13 +66,13 @@ class TrussAnalysisProject:
         for i in range(self._displacements.number_pin):
             f_x = self._solution.global_reactions[0,i]
             f_y = self._solution.global_reactions[1,i]
-            print(f"|   |- Node {self._displacements.pin_nodes[i]} = {format(f_x, fmt)}, {format(f_y, fmt)}")
+            print(f"|   |- Node {self._displacements.pin_nodes[i]} = ({format(f_x, fmt)}, {format(f_y, fmt)})    | mag: {format(np.sqrt(f_x**2+f_y**2), fmt)}")
         print('|- Roller Nodes:')
         for i in range(self._displacements.number_roller):
             j = i + self._displacements.number_pin
             f_x = self._solution.global_reactions[0,j]
             f_y = self._solution.global_reactions[1,j]
-            print(f"|   |- Node {self._displacements.roller_nodes[i]} = {format(f_x, fmt)}, {format(f_y, fmt)}")
+            print(f"|   |- Node {self._displacements.roller_nodes[i]} = ({format(f_x, fmt)}, {format(f_y, fmt)})    | mag: {format(np.sqrt(f_x**2+f_y**2), fmt)}")
 
 
     def report_rod_forces(self, fmt:str = '.3g'):
