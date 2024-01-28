@@ -218,11 +218,7 @@ class TrussPlotter:
                     ha='center', va='center', backgroundcolor='white')
 
         # Plot element numbers
-        for i in range(number_elements):
-            node1, node2 = element_connectivity[i]
-            mid_point = (node_coordinates[node1-1] + node_coordinates[node2-1]) / 2
-            ax.text(mid_point[0], mid_point[1], str(i+1), fontsize=6, 
-                    ha='center', va='center', backgroundcolor='white')
+        self._plot_element_numbers(mesh, ax)
 
         # Save plot as PDF
         if save:
@@ -230,6 +226,17 @@ class TrussPlotter:
         if show:
             plt.show()
         plt.close()
+
+    def _plot_element_numbers(self, mesh:Mesh,  ax):
+        element_connectivity = mesh.element_connectivity
+        number_elements = mesh.number_elements
+        node_coordinates = np.array(mesh.node_coordinates)
+        
+        for i in range(number_elements):
+            node1, node2 = element_connectivity[i]
+            mid_point = (node_coordinates[node1-1] + node_coordinates[node2-1]) / 2
+            ax.text(mid_point[0], mid_point[1], str(i+1), fontsize=6, 
+                    ha='center', va='center', backgroundcolor='white')
 
     def _plot_all_nodes(self, mesh:Mesh, displacements:Displacements, ax):
         node_coordinates = np.array(mesh.node_coordinates)
@@ -511,7 +518,11 @@ class TrussPlotter:
                     linestyle='-', linewidth=1, color=[0.5, 0.5, 0.5])
             s_node += 1
 
+        # plot nodes, Pin Nodes, and Roller Nodes
         self._plot_all_nodes(mesh=mesh, displacements=displacements, ax=ax)
+
+        # plot element numbers
+        self._plot_element_numbers(mesh, ax)
         # Save and/or show plot
         if save:
             plt.savefig(file_path)
