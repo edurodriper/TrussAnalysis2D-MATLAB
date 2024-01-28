@@ -11,6 +11,27 @@ from npp_2d_truss_analysis.truss_analysis_2d import Dofs, Analysis
 from npp_2d_truss_analysis.truss_solution import Solution, write_results
 
 
+def get_colors(current_value, positive_value, negative_value):
+    color_compression = np.array([0.7843, 0, 0.1569])
+    color_zero = np.array([0.9020, 0.9020, 0.9020])
+    color_tension = np.array([0.1569, 0, 0.7843])
+
+    if current_value < 0:
+        ratio = current_value / negative_value
+        c1 = color_compression
+        c2 = color_zero
+    else:
+        ratio = current_value / positive_value
+        c1 = color_tension
+        c2 = color_zero
+
+    element_color = np.zeros(3)
+    element_color[1] = c2[1] + ratio * (c1[1] - c2[1])
+    element_color[0] = c2[0] + ratio * (c1[0] - c2[0])
+    element_color[2] = c2[2] + ratio * (c1[2] - c2[2])
+
+    return element_color
+
 def get_roller_lines(app_point, dir_vector, plot_scale):
     """returns the 
 
@@ -264,19 +285,129 @@ class TrussPlotter:
             plt.show()
         plt.close()
 
+
+    def plot_deformation(self, info:Info, mesh:Mesh, forces:Forces, 
+            displacements:Displacements, solution:Solution, 
+            save:bool=True, show:bool=True):
+        # TODO some lists need to be converted to arrays. 
+        project_dir = info.project_directory
+        file_name = info.file_name
+        plot_x_limits = self.plot_x_limits
+        plot_y_limits = self.plot_y_limits
+        paper_size = self.paper_size
+        paper_position = self.paper_position
+        scale_factor = self.scale_factor
+        number_nodes = mesh.number_nodes
+        number_elements = mesh.number_elements
+        node_coordinates = np.transpose(np.array(mesh.node_coordinates))
+        element_connectivity = np.array(mesh.element_connectivity)
+        number_pin = displacements.number_pin
+        pin_nodes = np.array(displacements.pin_nodes)
+        number_roller = displacements.number_roller
+        roller_nodes = np.array(displacements.roller_nodes)
+        node_real_displacements = solution.global_displacements
+
+        new_file_name = f"{file_name}_DEFORMATION.pdf"
+        file_path = f"{project_dir}/{new_file_name}"
+
+        node_displacements = node_real_displacements * scale_factor
+
+        # Figure and axes setup
+        fig, ax = plt.subplots()
+        fig.set_size_inches(paper_size[0] / 2.54, paper_size[1] / 2.54)  # Convert cm to inches
+        ax.set_xlim(plot_x_limits)
+        ax.set_ylim(plot_y_limits)
+        ax.set_aspect('equal', adjustable='box')
+        ax.set_title(f"{file_name}: Deformation (x{scale_factor:.2E})")
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+
+        # Undeformed elements
+        for num_ele in range(number_elements):
+            node1, node2 = element_connectivity[num_ele,:]
+            x1_coord, y1_coord = node_coordinates[:,node1 - 1]
+            x2_coord, y2_coord = node_coordinates[:, node2 - 1]
+            ax.plot([x1_coord, x2_coord], [y1_coord, y2_coord], linestyle='--', linewidth=1, color=[0.6, 0.6, 0.6])
+
+        # Undeformed nodes
+        node_x_coord = node_coordinates[0, :]
+        node_y_coord = node_coordinates[1, :]
+        ax.plot(node_x_coord, node_y_coord, linestyle='none', linewidth=1, marker='o', markersize=3, markeredgecolor=[0.0, 0.0, 0.0], markerfacecolor=[1.0, 1.0, 1.0])
+
+        # Undeformed pin nodes
+        pin_x_coord = node_coordinates[0, pin_nodes - 1]  # Adjust for zero-based indexing
+        pin_y_coord = node_coordinates[1, pin_nodes - 1]
+        ax.plot(pin_x_coord, pin_y_coord, linestyle='none', linewidth=1.5, marker='o', markersize=3, markeredgecolor=[0.0, 0.0, 0.0], markerfacecolor=[0.0, 0.0, 0.0])
+        
+        # Undeformed roller nodes
+        roller_x_coord = node_coordinates[0, roller_nodes - 1]  # Adjust for zero-based indexing
+        roller_y_coord = node_coordinates[1, roller_nodes - 1]
+        ax.plot(roller_x_coord, roller_y_coord, linestyle='none', linewidth=1.5, marker='o', markersize=3, markeredgecolor=[0.0, 0.0, 0.0], markerfacecolor=[1.0, 1.0, 1.0])
+
+        # Deformed elements
+        for num_ele in range(number_elements):
+            node1, node2 = element_connectivity[num_ele,:]
+            x1_coord, y1_coord = node_coordinates[:, node1 - 1]  # Adjust for zero-based indexing
+            x2_coord, y2_coord = node_coordinates[:, node2 - 1]
+            x1_def = node_displacements[2 * (node1 - 1)]
+            y1_def = node_displacements[2 * (node1 - 1) + 1]
+            x2_def = node_displacements[2 * (node2 - 1)]
+            y2_def = node_displacements[2 * (node2 - 1) + 1]
+            ax.plot([x1_coord + x1_def, x2_coord + x2_def], [y1_coord + y1_def, y2_coord + y2_def], linestyle='-', linewidth=2.5, color=[0.4, 0.4, 0.4])
+
+        # Deformed nodes
+        for num_nod in range(number_nodes):
+            node_x_coord = node_coordinates[0, num_nod]
+            node_y_coord = node_coordinates[1, num_nod]
+            node_x_def = node_displacements[2 * num_nod]
+            node_y_def = node_displacements[2 * num_nod + 1]
+            ax.plot(node_x_coord + node_x_def, node_y_coord + node_y_def, 
+                    linestyle='none', linewidth=1, 
+                    marker='o', markersize=4, 
+                    markeredgecolor=[0.0, 0.0, 0.0], 
+                    markerfacecolor=[1.0, 1.0, 1.0])
+
+        # Deformed pin nodes
+        for num_pin in range(number_pin):
+            node = pin_nodes[num_pin] - 1  # Adjusting for zero-based indexing
+            pin_x_coord = node_coordinates[0, node]
+            pin_y_coord = node_coordinates[1, node]
+            pin_x_def = node_displacements[2 * node]
+            pin_y_def = node_displacements[2 * node + 1]
+            ax.plot(pin_x_coord + pin_x_def, pin_y_coord + pin_y_def, 
+                    linestyle='none', linewidth=1.5, 
+                    marker='o', markersize=5, 
+                    markeredgecolor=[0.0, 0.0, 0.0], markerfacecolor=[0.0, 0.0, 0.0])
+
+
+        # Deformed roller nodes
+        for num_rol in range(number_roller):
+            node = roller_nodes[num_rol] - 1  # Adjusting for zero-based indexing
+            roller_x_coord = node_coordinates[0, node]
+            roller_y_coord = node_coordinates[1, node]
+            roller_x_def = node_displacements[2 * node]
+            roller_y_def = node_displacements[2 * node + 1]
+            ax.plot(roller_x_coord + roller_x_def, roller_y_coord + roller_y_def, 
+                    linestyle='none', linewidth=1.5, 
+                    marker='o', markersize=5, 
+                    markeredgecolor=[0.0, 0.0, 0.0], 
+                    markerfacecolor=[1.0, 1.0, 1.0])
+
+                
+        if save:
+            # Save figure as PDF
+            plt.savefig(file_path, format='pdf')
+        # NotImplementedError()
+
+
     def plot_stress(self, info, mesh, forces, displacements, solution, save:bool=True, show:bool=True):
         pass
         NotImplementedError()
-
-    def plot_deformation(self, info, mesh, forces, displacements, solution, save:bool=True, show:bool=True):
-        pass
-        NotImplementedError()
-
 #%%
 
 if __name__ == '__main__':
     # pp_project_dir = pathlib.Path('example-np')
-    pp_project_dir = pathlib.Path('exam2024-01')
+    pp_project_dir = pathlib.Path('../../examples/exam2024-01')
     info = Info(project_directory=str(pp_project_dir.absolute()), file_name='test')
 
     fileData = FileData.from_directory(info.project_directory)
@@ -310,6 +441,10 @@ if __name__ == '__main__':
     tp = TrussPlotter()
     tp.get_plot_parameters(mesh=mesh, solution=solution)
 
-    tp.plot_truss(info,  mesh, forces, displacements, save=True, show=True)
+    # tp.plot_truss(info,  mesh, forces, displacements, save=True, show=True)
+
+    # %%
+    tp.plot_deformation(info, mesh, forces, displacements, solution, save=False, show=True)
+# %%
 
 # %%
