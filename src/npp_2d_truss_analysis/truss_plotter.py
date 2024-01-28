@@ -400,9 +400,87 @@ class TrussPlotter:
         # NotImplementedError()
 
 
-    def plot_stress(self, info, mesh, forces, displacements, solution, save:bool=True, show:bool=True):
-        pass
-        NotImplementedError()
+    def plot_stress(self, info:Info, mesh:Mesh, forces:Forces,
+            displacements:Displacements, solution:Solution,
+            save:bool=True, show:bool=True):
+        # TODO some lists need to be converted to arrays.
+        project_dir = info.project_directory
+        file_name = info.file_name
+        plot_x_limits = self.plot_x_limits
+        plot_y_limits = self.plot_y_limits
+        paper_size = self.paper_size
+        paper_position = self.paper_position
+        # scale_factor = self.scale_factor
+        number_nodes = mesh.number_nodes
+        number_elements = mesh.number_elements
+        node_coordinates = np.transpose(np.array(mesh.node_coordinates))
+        element_connectivity = np.array(mesh.element_connectivity)
+        number_forces = forces.number_forces
+        force_nodes = forces.force_nodes
+        force_components = np.array(forces.force_components)
+        force_angles = forces.force_angles
+        number_pin = displacements.number_pin
+        pin_nodes = np.array(displacements.pin_nodes)
+        number_roller = displacements.number_roller
+        roller_nodes = np.array(displacements.roller_nodes)
+        roller_directions = displacements.roller_directions
+        roller_angles = displacements.roller_angles
+        element_stress = solution.element_stress
+        global_reactions = solution.global_reactions
+        
+        new_file_name = f"{file_name}_Stress.pdf"
+        file_path = f"{project_dir}/{new_file_name}"
+
+        # File path creation
+        new_file_name = f"{file_name}_STRESS.pdf"
+        file_path = f"{project_dir}/{new_file_name}"
+
+        # Figure and axes setup
+        fig, ax = plt.subplots()
+        fig.set_size_inches(paper_size[0] / 2.54, paper_size[1] / 2.54)  # Convert cm to inches
+        fig.patch.set_facecolor([1, 1, 1])
+        ax.set_xlim(plot_x_limits)
+        ax.set_ylim(plot_y_limits)
+        ax.set_aspect('equal', adjustable='box')
+        ax.set_title(f"{file_name}: Stress")
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+
+        # Roller constraints
+        for num_rol in range(number_roller):
+            r_node = roller_nodes[num_rol] - 1
+            r_direction = roller_directions[num_rol]
+            r_angle = roller_angles[num_rol]
+            C = np.cos(r_angle * np.pi / 180)
+            S = np.sin(r_angle * np.pi / 180)
+            r_dir_vec = np.array([C, S]) if r_direction == 1 else np.array([-S, C])
+            draw_seg = get_roller_lines(node_coordinates[:, r_node], r_dir_vec, self.plot_scale)
+            for seg in range(2):
+                 ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
+                        linestyle='-', linewidth=1, marker='none', color='black')
+                # ax.plot(draw_seg[2 * seg - 1, :], draw_seg[2 * seg, :], 
+                #         linestyle='-', linewidth=1, color=[0.0, 0.0, 0.0])
+
+        # Elements
+        pos_stress = element_stress[element_stress >= 0]
+        neg_stress = element_stress[element_stress <= 0]
+        max_pos_stress = max(pos_stress)
+        max_neg_stress = min(neg_stress)
+        for num_ele in range(number_elements):
+            node1, node2 = element_connectivity[num_ele, :]
+            x1_coord, y1_coord = node_coordinates[:, node1 - 1]  # Adjust for zero-based indexing
+            x2_coord, y2_coord = node_coordinates[:, node2 - 1]
+            element_color = get_colors(element_stress[num_ele], max_pos_stress, max_neg_stress)
+            ax.plot([x1_coord, x2_coord], [y1_coord, y2_coord], linestyle='-', linewidth=3, color=element_color)
+
+        # Save and/or show plot
+        if save:
+            plt.savefig(file_path)
+        if show:
+            plt.show()
+
+
+        # NotImplementedError()
 #%%
 
 if __name__ == '__main__':
@@ -444,7 +522,7 @@ if __name__ == '__main__':
     # tp.plot_truss(info,  mesh, forces, displacements, save=True, show=True)
 
     # %%
-    tp.plot_deformation(info, mesh, forces, displacements, solution, save=False, show=True)
-# %%
-
+    # tp.plot_deformation(info, mesh, forces, displacements, solution, save=False, show=True)
+    # %%
+    tp.plot_stress(info, mesh, forces, displacements, solution, save=False, show=True)
 # %%
