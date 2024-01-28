@@ -50,21 +50,30 @@ mesh.process_mesh_json(json_data=mesh_json_data)
 displacements = Displacements()
 displ_json_data ="""{
   "pin": [
-    {"id": 1, "node":4, "angle": 0:,"dx": 0, "dy":0}
+    {"id": 1, "node":4, "angle": 0,"dx": 0, "dy":0}
   ],
   "rollers": [
     {"id": 1, "node": 1, "direction": 1, "angle": -63.4349, "dx":0}
   ]
 }"""
-
+displacements.process_json(json_data=displ_json_data)
 # displacements.process_displacements(file_data= fileData.displacements)
 
-forces = Forces()
-forces.process_forces(file_data= fileData.forces)
+force_json_data ="""{
+  "forces": [
+    {"id": 1, "node":5, "direction": -180,"x": 40000, "y":0},
+    {"id": 2, "node":1, "direction":  200,"x": 20000, "y":0}
+  ]
+}"""
+forces = Forces.from_json(force_json_data)
+
 truss_problem = TrussAnalysisProject(info=info, mesh=mesh, displacements=displacements, forces=forces)
 
 #%%
-forces.force_components[0] = (80000,0)
+# forces.force_components[0] = (80000,0)
+forces.list_forces()
+#%%
+forces.update_force_by_id(force_id=0, fxy=(80000,0))
 #%%
 
 truss_problem.write_input_data()

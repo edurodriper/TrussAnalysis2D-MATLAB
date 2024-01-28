@@ -37,9 +37,15 @@ def displ_json_data():
     }"""
 
 
-# @pytest.fixture
-# def forces_data():
-#     return  [[2.0], [5.0, -180.0, 40000.0, 0.0], [3.0, 200.0, 20000.0, 0.0]]
+@pytest.fixture
+def forces_json_data():
+    return  """{
+  "forces": [
+    {"id": 1, "node":5, "direction": -180,"x": 40000, "y":0},
+    {"id": 2, "node":3, "direction":  200,"x": 20000, "y":0}
+  ]
+}"""
+
 
 
 def test_mesh_json(mesh_json_data):
@@ -67,10 +73,10 @@ def test_displ_json(displ_json_data):
     assert displ.number_support == 2
     assert displ.support_nodes == [4,1]
 
-# def test_forces(forces_data):
-#     forces = Forces()
-#     forces.process_forces(forces_data)
-#     assert forces.number_forces == 2
-#     assert forces.force_nodes == [5, 3]
-#     assert forces.force_components ==  [(40000.0, 0.0), (20000.0, 0.0)]
-#     assert forces.force_angles == [-180.0, 200.0]
+def test_forces_json(forces_json_data):
+    forces = Forces()
+    forces.process_json(forces_json_data)
+    assert forces.number_forces == 2
+    assert forces.force_nodes == [5, 3]
+    assert forces.force_components ==  [(40000.0, 0.0), (20000.0, 0.0)]
+    assert forces.force_angles == [-180.0, 200.0]

@@ -227,8 +227,6 @@ class Displacements:
         self.support_nodes = self.pin_nodes + self.roller_nodes
 
 
-
-
 class Forces:
     def __init__(self):
         self.number_forces = None
@@ -236,12 +234,13 @@ class Forces:
         self.force_components = None
         self.force_angles = None
 
-    def process_forces(self, file_data):
+    def process_forces(self, file_data:np.ndarray):
         file_line = 0
 
         # Process forces data
         self.number_forces = int(file_data[file_line][0])
         file_line += 1
+        self.force_ids = range(self.number_forces)
         self.force_nodes = []
         self.force_angles = []
         self.force_components = []
@@ -251,7 +250,78 @@ class Forces:
             self.force_components.append((file_data[file_line][2], file_data[file_line][3],))
             file_line += 1
 
+    def process_json(self, json_str:str):
+        """
+        Process the JSON data and extract forces information.
 
+        Args:
+            json_data (str): JSON data containing forces information.
+
+        Returns:
+            None
+        """
+        # Parse JSON data
+        data = json.loads(json_str)
+        # Process forces data
+        self.number_forces = len(data["forces"])
+        self.force_ids = range(self.number_forces)
+        self.force_nodes = [force["node"] for force in data["forces"]]
+        self.force_angles = [force["direction"] for force in data["forces"]]
+        self.force_components = [(force["x"], force["y"]) for force in data["forces"]]
+
+    def list_forces(self, force_fmt:str='^10.2f'):
+            """
+            Prints the list of forces applied to the truss nodes.
+            
+            Each force is displayed with its corresponding node, force components, and angle.
+            """
+            print(f'|   ID     |   Node:  | Angle [deg] |({"FX":^10s},{"FY":^10s})')
+            print(f'|{"-"*10}|{"-"*10}|{"-"*13}|{"-"*10}-{"-"*10}')
+            for id, node, (fx, fy), angle in zip(range(self.number_forces), self.force_nodes, self.force_components, self.force_angles):
+                print(f'|{id:^10d}|{node:^10d}|{angle:^13.2f}|({format(fx, force_fmt)},{format(fy, force_fmt)})')
+
+    def get_force_by_id(self, id) -> dict:
+        """
+        Get the force information for a given force ID
+
+        Args:
+            id (int): Force ID
+
+        Returns:
+            dict: Dictionary with the force information.
+        """
+        if id<0 or id>=self.number_forces or not isinstance(id, int):
+            raise ValueError(f'Invalid force ID: {id}')
+        return {'id': id, 'node': self.force_nodes[id], 'fxy': self.force_components[id], 'angle': self.force_angles[id]}
+        
+
+    def update_force_by_id(self, force_id:int, node:int=None, fxy:tuple=None, angle:float=None):
+        """Update the force information for a given force ID
+        """
+        if force_id<0 or force_id>=self.number_forces or not isinstance(force_id, int):
+            raise ValueError(f'Invalid force ID: {force_id}')
+        if node is not None:
+            self.force_nodes[force_id] = node
+        if fxy is not None:
+            assert isinstance(fxy, tuple) and all([isinstance(f, (int, float)) for f in fxy ]) and len(fxy)==2, 'fxy should be a tuple with (float, float)'
+            self.force_components[force_id] = fxy
+        if angle is not None:
+            self.force_angles[force_id] = angle
+
+    @classmethod
+    def from_json(cls, json_str:str):
+        """
+        Create a Forces instance from JSON data.
+
+        Args:
+            json_str (str): JSON data containing forces information.
+
+        Returns:
+            Forces: Forces instance with the forces information.
+        """
+        forces = cls()
+        forces.process_json(json_str)
+        return forces
 
 def write_input_data(info, mesh, displacements, forces):
     """Write input data for the problem to a file	
@@ -308,3 +378,5 @@ def write_input_data(info, mesh, displacements, forces):
             file.write(f'{node:<4} {fx:11.6G} {fy:11.6G} {angle:11.2f}\n')
 
 
+
+# %%
