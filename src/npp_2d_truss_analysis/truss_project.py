@@ -64,14 +64,14 @@ class TrussAnalysisProject:
         print('Reaction forces:')
         print('|- Pinned Nodes:')
         for i in range(self._displacements.number_pin):
-            f_x = self._solution.global_reactions[i][0]
-            f_y = self._solution.global_reactions[i][1]
+            f_x = self._solution.global_reactions[0,i]
+            f_y = self._solution.global_reactions[1,i]
             print(f"|   |- Node {self._displacements.pin_nodes[i]} = {format(f_x, fmt)}, {format(f_y, fmt)}")
         print('|- Roller Nodes:')
         for i in range(self._displacements.number_roller):
             j = i + self._displacements.number_pin
-            f_x = self._solution.global_reactions[j][0]
-            f_y = self._solution.global_reactions[j][1]
+            f_x = self._solution.global_reactions[0,j]
+            f_y = self._solution.global_reactions[1,j]
             print(f"|   |- Node {self._displacements.roller_nodes[i]} = {format(f_x, fmt)}, {format(f_y, fmt)}")
 
 
