@@ -159,17 +159,11 @@ class TrussPlotter:
     def plot_truss(self, info, mesh, forces, displacements, save:bool=True, show:bool=True):
         project_dir = info.project_directory
         file_name = info.file_name
-        plot_x_limits = self.plot_x_limits
-        plot_y_limits = self.plot_y_limits
-        paper_size = self.paper_size
         number_nodes = mesh.number_nodes
         number_elements = mesh.number_elements
         node_coordinates = np.array(mesh.node_coordinates)
         element_connectivity = mesh.element_connectivity
-        number_forces = forces.number_forces
         force_nodes = forces.force_nodes
-        force_components = np.array(forces.force_components)
-        force_angles = forces.force_angles
         pin_nodes = displacements.pin_nodes
         number_roller = displacements.number_roller
         roller_nodes = displacements.roller_nodes
@@ -184,28 +178,17 @@ class TrussPlotter:
         d_y_real = 0.5 / self.plot_scale  # meters
 
         # Create figure and axes
-        fig, ax = plt.subplots(figsize=(paper_size[0]/2.54, paper_size[1]/2.54))  # Size in inches
-        ax.set_xlim(plot_x_limits)
-        ax.set_ylim(plot_y_limits)
+        fig, ax = plt.subplots(
+            figsize=(self.paper_size[0]/2.54, self.paper_size[1]/2.54))  # Size in inches
+        ax.set_xlim(self.plot_x_limits)
+        ax.set_ylim(self.plot_y_limits)
         ax.set_title(f"{file_name}: Truss")
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
         ax.set_aspect('equal', adjustable='box')
 
         # plot rollers 
-        for num_rol in range(number_roller):
-            r_node = roller_nodes[num_rol] - 1  # Adjust for zero-based indexing in Python
-            r_direction = roller_directions[num_rol]
-            r_angle = roller_angles[num_rol]
-            c = np.cos(np.radians(r_angle))
-            s = np.sin(np.radians(r_angle))
-
-            r_dir_vec = np.array([c, s]) if r_direction == 1 else np.array([-s, c])
-
-            draw_seg = get_roller_lines(node_coordinates[r_node,:], r_dir_vec, self.plot_scale)
-            for seg in range(2):
-                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
-                        linestyle='-', linewidth=1, marker='none', color='black')
+        self._plot_rollers(node_coordinates, displacements, ax)
 
         # Plot elements
         for i in range(number_elements):
@@ -215,47 +198,10 @@ class TrussPlotter:
             ax.plot(x_coords, y_coords, linestyle='-', linewidth=2.5, color='grey')
 
         # plot forces
-        for num_for in range(number_forces):
-            f_node = force_nodes[num_for] - 1  # Adjust for zero-based indexing in Python
-            f_comp_xi_yi = force_components[num_for, :]
-            f_angle = force_angles[num_for]
-            c = np.cos(np.radians(f_angle))
-            s = np.sin(np.radians(f_angle))
-            t = np.array([[c, s], [-s, c]])
-            f_comp_xy = t.T @ f_comp_xi_yi
-            f_dir_vec = f_comp_xy / np.linalg.norm(f_comp_xy)
-
-            draw_seg = get_force_arrow(node_coordinates[f_node,:], f_dir_vec, 14, self.plot_scale)
-            for seg in range(3):
-                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
-                        linestyle='-', linewidth=1.3, marker='none', color='black')
-
+        self._plot_force_vectors(node_coordinates, forces, ax)
 
         # % Nodes
-        node_x_coord = node_coordinates[:, 0]
-        node_y_coord = node_coordinates[:, 1]
-        ax.plot(node_x_coord, node_y_coord, linestyle='none', linewidth=1,
-            marker='o', markersize=14, markeredgecolor='black', 
-            markerfacecolor='white')
-
-        # % Pin nodes
-        pin_nodes_adjusted = [pn - 1 for pn in pin_nodes]
-
-        # Pin Nodes
-        pin_x_coord = node_coordinates[pin_nodes_adjusted, 0]
-        pin_y_coord = node_coordinates[pin_nodes_adjusted, 1]
-        ax.plot(pin_x_coord, pin_y_coord, linestyle='none', linewidth=1.5,
-                marker='o', markersize=5, markeredgecolor='black',
-                markerfacecolor='black')
-
-        # Roller nodes
-        roller_nodes_adjusted = [rn - 1 for rn in roller_nodes]
-        # Roller Nodes
-        roller_x_coord = node_coordinates[roller_nodes_adjusted, 0]
-        roller_y_coord = node_coordinates[roller_nodes_adjusted, 1]
-        ax.plot(roller_x_coord, roller_y_coord, linestyle='none', linewidth=1.5,
-                marker='o', markersize=5, markeredgecolor='black',
-                markerfacecolor='white')
+        self._plot_all_nodes(mesh= mesh, displacements=displacements, ax=ax)
 
         # Force nodes
         force_nodes_adjusted = [fn - 1 for fn in force_nodes]
@@ -285,6 +231,77 @@ class TrussPlotter:
             plt.show()
         plt.close()
 
+    def _plot_all_nodes(self, mesh:Mesh, displacements:Displacements, ax):
+        node_coordinates = np.array(mesh.node_coordinates)
+        pin_nodes = displacements.pin_nodes
+        roller_nodes = displacements.roller_nodes
+
+        node_x_coord = node_coordinates[:, 0]
+        node_y_coord = node_coordinates[:, 1]
+        ax.plot(node_x_coord, node_y_coord, linestyle='none', linewidth=1,
+            marker='o', markersize=14, markeredgecolor='black', 
+            markerfacecolor='white')
+
+        # % Pin nodes
+        pin_nodes_adjusted = [pn - 1 for pn in pin_nodes]
+
+        # Pin Nodes
+        pin_x_coord = node_coordinates[pin_nodes_adjusted, 0]
+        pin_y_coord = node_coordinates[pin_nodes_adjusted, 1]
+        ax.plot(pin_x_coord, pin_y_coord, linestyle='none', linewidth=1.5,
+                marker='o', markersize=5, markeredgecolor='black',
+                markerfacecolor='black')
+
+        # Roller nodes
+        roller_nodes_adjusted = [rn - 1 for rn in roller_nodes]
+        # Roller Nodes
+        roller_x_coord = node_coordinates[roller_nodes_adjusted, 0]
+        roller_y_coord = node_coordinates[roller_nodes_adjusted, 1]
+        ax.plot(roller_x_coord, roller_y_coord, linestyle='none', linewidth=1.5,
+                marker='o', markersize=5, markeredgecolor='black',
+                markerfacecolor='white')
+
+    def _plot_force_vectors(self, node_coordinates,
+            forces:Forces, ax):
+        number_forces = forces.number_forces
+        force_nodes = forces.force_nodes
+        force_components = np.array(forces.force_components)
+        force_angles = forces.force_angles
+        for num_for in range(number_forces):
+            f_node = force_nodes[num_for] - 1  # Adjust for zero-based indexing in Python
+            f_comp_xi_yi = force_components[num_for, :]
+            f_angle = force_angles[num_for]
+            c = np.cos(np.radians(f_angle))
+            s = np.sin(np.radians(f_angle))
+            t = np.array([[c, s], [-s, c]])
+            f_comp_xy = t.T @ f_comp_xi_yi
+            f_dir_vec = f_comp_xy / np.linalg.norm(f_comp_xy)
+
+            draw_seg = get_force_arrow(node_coordinates[f_node,:], f_dir_vec, 14, self.plot_scale)
+            for seg in range(3):
+                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
+                        linestyle='-', linewidth=1.3, marker='none', color='black')
+
+    def _plot_rollers(self, node_coordinates, displacements:Displacements, ax):
+        number_roller = displacements.number_roller
+        roller_nodes = displacements.roller_nodes
+        roller_directions = displacements.roller_directions
+        roller_angles = displacements.roller_angles
+        
+        for num_rol in range(number_roller):
+            r_node = roller_nodes[num_rol] - 1  # Adjust for zero-based indexing in Python
+            r_direction = roller_directions[num_rol]
+            r_angle = roller_angles[num_rol]
+            c = np.cos(np.radians(r_angle))
+            s = np.sin(np.radians(r_angle))
+
+            r_dir_vec = np.array([c, s]) if r_direction == 1 else np.array([-s, c])
+
+            draw_seg = get_roller_lines(node_coordinates[r_node,:], r_dir_vec, self.plot_scale)
+            for seg in range(2):
+                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
+                        linestyle='-', linewidth=1, marker='none', color='black')
+
 
     def plot_deformation(self, info:Info, mesh:Mesh, forces:Forces, 
             displacements:Displacements, solution:Solution, 
@@ -292,11 +309,7 @@ class TrussPlotter:
         # TODO some lists need to be converted to arrays. 
         project_dir = info.project_directory
         file_name = info.file_name
-        plot_x_limits = self.plot_x_limits
-        plot_y_limits = self.plot_y_limits
-        paper_size = self.paper_size
-        paper_position = self.paper_position
-        scale_factor = self.scale_factor
+        # paper_position = self.paper_position
         number_nodes = mesh.number_nodes
         number_elements = mesh.number_elements
         node_coordinates = np.transpose(np.array(mesh.node_coordinates))
@@ -310,15 +323,15 @@ class TrussPlotter:
         new_file_name = f"{file_name}_DEFORMATION.pdf"
         file_path = f"{project_dir}/{new_file_name}"
 
-        node_displacements = node_real_displacements * scale_factor
+        node_displacements = node_real_displacements * self.scale_factor
 
         # Figure and axes setup
         fig, ax = plt.subplots()
-        fig.set_size_inches(paper_size[0] / 2.54, paper_size[1] / 2.54)  # Convert cm to inches
-        ax.set_xlim(plot_x_limits)
-        ax.set_ylim(plot_y_limits)
+        fig.set_size_inches(self.paper_size[0] / 2.54, self.paper_size[1] / 2.54)  # Convert cm to inches
+        ax.set_xlim(self.plot_x_limits)
+        ax.set_ylim(self.plot_y_limits)
         ax.set_aspect('equal', adjustable='box')
-        ax.set_title(f"{file_name}: Deformation (x{scale_factor:.2E})")
+        ax.set_title(f"{file_name}: Deformation (x{self.scale_factor:.2E})")
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
@@ -406,8 +419,6 @@ class TrussPlotter:
         # TODO some lists need to be converted to arrays.
         project_dir = info.project_directory
         file_name = info.file_name
-        plot_x_limits = self.plot_x_limits
-        plot_y_limits = self.plot_y_limits
         paper_size = self.paper_size
         paper_position = self.paper_position
         # scale_factor = self.scale_factor
@@ -415,10 +426,6 @@ class TrussPlotter:
         number_elements = mesh.number_elements
         node_coordinates = np.transpose(np.array(mesh.node_coordinates))
         element_connectivity = np.array(mesh.element_connectivity)
-        number_forces = forces.number_forces
-        force_nodes = forces.force_nodes
-        force_components = np.array(forces.force_components)
-        force_angles = forces.force_angles
         number_pin = displacements.number_pin
         pin_nodes = np.array(displacements.pin_nodes)
         number_roller = displacements.number_roller
@@ -437,29 +444,19 @@ class TrussPlotter:
 
         # Figure and axes setup
         fig, ax = plt.subplots()
-        fig.set_size_inches(paper_size[0] / 2.54, paper_size[1] / 2.54)  # Convert cm to inches
+        fig.set_size_inches(self.paper_size[0] / 2.54, 
+                            self.paper_size[1] / 2.54)  # Convert cm to inches
         fig.patch.set_facecolor([1, 1, 1])
-        ax.set_xlim(plot_x_limits)
-        ax.set_ylim(plot_y_limits)
+        ax.set_xlim(self.plot_x_limits)
+        ax.set_ylim(self.plot_y_limits)
         ax.set_aspect('equal', adjustable='box')
         ax.set_title(f"{file_name}: Stress")
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
-        # Roller constraints
-        for num_rol in range(number_roller):
-            r_node = roller_nodes[num_rol] - 1
-            r_direction = roller_directions[num_rol]
-            r_angle = roller_angles[num_rol]
-            C = np.cos(r_angle * np.pi / 180)
-            S = np.sin(r_angle * np.pi / 180)
-            r_dir_vec = np.array([C, S]) if r_direction == 1 else np.array([-S, C])
-            draw_seg = get_roller_lines(node_coordinates[:, r_node], r_dir_vec, self.plot_scale)
-            for seg in range(2):
-                 ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
-                        linestyle='-', linewidth=1, marker='none', color='black')
-                # ax.plot(draw_seg[2 * seg - 1, :], draw_seg[2 * seg, :], 
-                #         linestyle='-', linewidth=1, color=[0.0, 0.0, 0.0])
+        self._plot_rollers(node_coordinates.T, 
+            displacements=displacements,
+            ax=ax)
 
         # Elements
         pos_stress = element_stress[element_stress >= 0]
@@ -471,8 +468,50 @@ class TrussPlotter:
             x1_coord, y1_coord = node_coordinates[:, node1 - 1]  # Adjust for zero-based indexing
             x2_coord, y2_coord = node_coordinates[:, node2 - 1]
             element_color = get_colors(element_stress[num_ele], max_pos_stress, max_neg_stress)
-            ax.plot([x1_coord, x2_coord], [y1_coord, y2_coord], linestyle='-', linewidth=3, color=element_color)
+            ax.plot([x1_coord, x2_coord], [y1_coord, y2_coord], 
+                    linestyle='-', linewidth=3, color=element_color)
 
+        # Forces vectors
+        self._plot_force_vectors(node_coordinates.T, forces, ax)
+
+        # Reaction vectors
+        s_node = 0  # Adjusted for zero-based indexing
+        # Pin reactions
+        for num_pin in range(number_pin):
+            p_node = pin_nodes[num_pin] - 1
+            p_reaction = global_reactions[:, s_node]
+            # x component
+            x_react = p_reaction[0]
+            f_dir_vec = np.array([x_react, 0]) / abs(x_react)
+            draw_seg = get_force_arrow(node_coordinates[:, p_node], f_dir_vec, 8, self.plot_scale)
+            for seg in range(3):
+                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
+                    # draw_seg[2 * seg - 1, :], draw_seg[2 * seg, :], 
+                        linestyle='-', linewidth=1, color=[0.5, 0.5, 0.5])
+                
+            # y component
+            y_react = p_reaction[1]
+            f_dir_vec = np.array([0, y_react]) / abs(y_react)
+            draw_seg = get_force_arrow(node_coordinates[:, p_node], f_dir_vec, 8, self.plot_scale)
+            for seg in range(3):
+                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
+                    # draw_seg[2 * seg - 1, :], draw_seg[2 * seg, :], 
+                    linestyle='-', linewidth=1, color=[0.5, 0.5, 0.5])
+            s_node += 1
+
+        # Roller reactions
+        for num_rol in range(number_roller):
+            r_node = roller_nodes[num_rol] - 1
+            r_reaction = global_reactions[:, s_node]
+            f_dir_vec = r_reaction / np.linalg.norm(r_reaction)
+            draw_seg = get_force_arrow(node_coordinates[:, r_node], f_dir_vec, 8, self.plot_scale)
+            for seg in range(3):
+                ax.plot(draw_seg[2*seg:2*seg+2, 0], draw_seg[2*seg:2*seg+2, 1],
+                    # draw_seg[2 * seg - 1, :], draw_seg[2 * seg, :], 
+                    linestyle='-', linewidth=1, color=[0.5, 0.5, 0.5])
+            s_node += 1
+
+        self._plot_all_nodes(mesh=mesh, displacements=displacements, ax=ax)
         # Save and/or show plot
         if save:
             plt.savefig(file_path)
@@ -519,10 +558,10 @@ if __name__ == '__main__':
     tp = TrussPlotter()
     tp.get_plot_parameters(mesh=mesh, solution=solution)
 
-    # tp.plot_truss(info,  mesh, forces, displacements, save=True, show=True)
+    tp.plot_truss(info,  mesh, forces, displacements, save=True, show=True)
 
     # %%
-    # tp.plot_deformation(info, mesh, forces, displacements, solution, save=False, show=True)
+    tp.plot_deformation(info, mesh, forces, displacements, solution, save=False, show=True)
     # %%
     tp.plot_stress(info, mesh, forces, displacements, solution, save=False, show=True)
 # %%
