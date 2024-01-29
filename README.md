@@ -138,4 +138,5 @@ In example 2, all members properties are **E = 200 GPa** and **A = 0.0015 m^2^**
 
 ## Author
 
-- Eduardo Pereira
+- Eduardo Pereira (original MATLAB/GNU Octave version)
+- Nikolaos Papadakis (Python implementation)

@@ -1,0 +1,25 @@
+# directories
+*/*.egg-info/
+.ipynb_checkpoints/
+Lectures/src/.vscode/
+.vscode/
+
+
+
+# latex 
+*.vrb
+*.toc
+*.snm
+*.out
+*.nav
+*.gz
+*.log
+*.aux
+*.glo
+*.ist
+*.acn
+*.synctex(busy)
+*.pyc
+Lectures/*/*.pdf
+/.pytest_cache/
+/docs/build/
