@@ -1,22 +1,20 @@
 #%%[markdown]
 # # Scope 
+# this is a quick start example for the truss analysis package. 
+# 
+# # Description
+#
 # This is a version of the trust analysis project that uses the class analysis class with the class method from Json file.
 # The main difference from the world other version is that individual mesh displacements and forces objects are not created.
-# 
+#
+# The problem is based on the exam2024-01 (N. Papadakis lecture course).   
+#  
 # # Notes
 # Additionally in this example I am adding the update methods suitable for marking my exam. 
 # So please disregard any code snippets that have the `am` variable inside
 #%%
 import pathlib
-import numpy as np
-import tkinter as tk
-from tkinter import filedialog
-
-from npp_2d_truss_analysis.truss_input import Info, FileData,Mesh,Displacements,Forces, write_input_data
-from npp_2d_truss_analysis.truss_analysis_2d import Dofs, Analysis
-from npp_2d_truss_analysis.truss_solution import Solution, write_results
-from npp_2d_truss_analysis.truss_plotter import TrussPlotter
-from npp_2d_truss_analysis.truss_project import TrussAnalysisProject
+from npp_2d_truss_analysis import Info, TrussAnalysisProject
 
 
 #%%
