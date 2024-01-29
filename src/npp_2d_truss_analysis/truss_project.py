@@ -58,6 +58,30 @@ class TrussAnalysisProject:
         # Assume info, plot, mesh, forces, and displacements are instances of their respective classes with attributes set
         self._tp.plot_truss(self._info, self._mesh, self._forces, self._displacements, save=save, show=show)
 
+    def plot_deformation(self, save:bool=True, show:bool=True):
+        # Requires solution to be calculated
+        self._tp.get_plot_parameters(mesh=self._mesh, solution=self._solution)
+
+        # Usage example
+        # Assume info, plot, mesh, forces, and displacements are instances of their respective classes with attributes set
+        self._tp.plot_deformation(info=self._info, 
+                mesh=self._mesh, forces=self._forces, 
+                displacements=self._displacements,
+                solution=self._solution,
+                save=save, show=show)
+
+    def plot_stresses(self, save:bool=True, show:bool=True):
+        # Requires solution to be calculated
+        self._tp.get_plot_parameters(mesh=self._mesh, solution=self._solution)
+
+        # Usage example
+        # Assume info, plot, mesh, forces, and displacements are instances of their respective classes with attributes set
+        self._tp.plot_stress(info=self._info, 
+                mesh=self._mesh, forces=self._forces, 
+                displacements=self._displacements,
+                solution=self._solution,
+                save=save, show=show)
+
 
     def report_reactions(self, fmt:str = '.3g'):
         """prints the reaction forces on each support using a specified format"""
